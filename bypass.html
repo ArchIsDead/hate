@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>suic1.de</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { min-height: 100vh; display: grid; place-items: center; background: #000; color: #fff; font-family: Arial, sans-serif; overflow: hidden; position: relative; }
+    .rain { position: absolute; inset: 0; z-index: 0; overflow: hidden; opacity: 0.19; pointer-events: none; }
+    .rain span { position: absolute; top: -10%; left: var(--x); color: #fff; font: 12px/1 monospace; animation: fall var(--duration) linear var(--delay) infinite; user-select: none; }
+    @keyframes fall { from { transform: translateY(-10vh); } to { transform: translateY(115vh); } }
+    .gp { position: relative; z-index: 1; width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
+    h1 { font-size: clamp(3rem, 10vw, 7rem); font-weight: 400; letter-spacing: -0.07em; line-height: 0.95; text-align: center; margin-bottom: 8px; }
+    .st { font-size: 1rem; font-weight: 400; color: rgba(255, 255, 255, 0.7); margin-bottom: 40px; letter-spacing: 0.2px; text-align: center; }
+    .ia { display: flex; flex-direction: column; gap: 16px; width: 100%; margin-bottom: 20px; align-items: center; }
+    input { width: 100%; max-width: 500px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 0; padding: 14px 18px; font-size: 0.95rem; color: #fff; outline: none; transition: border 0.2s, background 0.2s; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    input::placeholder { color: rgba(255, 255, 255, 0.45); font-weight: 300; }
+    input:focus { border-color: #fff; background: rgba(0, 0, 0, 0.75); }
+    button { background: #fff; color: #000; border: none; border-radius: 0; padding: 14px 40px; font-weight: 600; font-size: 0.95rem; letter-spacing: 0.3px; cursor: pointer; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15); white-space: nowrap; }
+    button:hover { background: #eaeaea; box-shadow: 0 6px 16px rgba(255, 255, 255, 0.25); }
+    button:active { transform: scale(0.97); }
+    .rb { width: 100%; max-width: 500px; background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0; padding: 16px; min-height: 60px; max-height: 180px; overflow-y: auto; font-size: 0.8rem; word-break: break-word; color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; flex-direction: column; gap: 6px; line-height: 1.5; font-family: monospace; white-space: pre-wrap; }
+    .rb.show { display: flex; }
+    .rb a { color: #fff; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; transition: opacity 0.2s; }
+    .rb a:hover { opacity: 0.75; }
+    .rm { font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.3px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; margin-top: 4px; }
+    @media (prefers-reduced-motion: reduce) { .rain span { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="rain" id="rain"></div>
+  <div class="gp">
+    <h1>suic1.de</h1>
+    <div class="st">Free bypass.tools</div>
+    <div class="ia">
+      <input type="text" id="ui" placeholder="Enter URL to bypass" autocomplete="off">
+      <button id="bb">Bypass</button>
+    </div>
+    <div class="rb" id="ro"></div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const input = $('ui');
+    const button = $('bb');
+    const output = $('ro');
+    const rain = $('rain');
+
+    for (let i = 0; i < 42; i++) {
+      const span = document.createElement('span');
+      span.textContent = 'why';
+      span.style.setProperty('--delay', (i % 9) * 0.7 + 's');
+      span.style.setProperty('--x', (i * 23) % 100 + '%');
+      span.style.setProperty('--duration', 5 + (i % 5) + 's');
+      rain.appendChild(span);
+    }
+
+    function setOutput(html, meta = '') {
+      output.innerHTML = html + (meta ? `<div class="rm">${meta}</div>` : '');
+      output.classList.add('show');
+    }
+
+    button.addEventListener('click', async () => {
+      const url = input.value.trim();
+      if (!url) {
+        setOutput('Please enter a URL first.');
+        return;
+      }
+
+      output.classList.remove('show');
+      const start = Date.now();
+
+      try {
+        const res = await fetch('https://r4-api.my.id/bypasstools?url=' + encodeURIComponent(url));
+        const data = await res.json();
+        const elapsed = Date.now() - start;
+
+        const rawJson = JSON.stringify(data, null, 2);
+        const meta = `Response time: ${elapsed}ms`;
+
+        output.innerHTML = rawJson;
+        if (data.result && typeof data.result === 'string' && data.result.startsWith('http')) {
+          const link = document.createElement('a');
+          link.href = data.result;
+          link.textContent = data.result;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          output.innerHTML = rawJson.replace(data.result, link.outerHTML);
+        }
+        output.innerHTML += `<div class="rm">${meta}</div>`;
+        output.classList.add('show');
+      } catch (err) {
+        setOutput('Failed to reach the bypass service.', `Response time: ${Date.now() - start}ms`);
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') button.click();
+    });
+
+    output.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link) {
+        e.preventDefault();
+        const url = link.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(() => {
+            link.textContent = url + ' (copied)';
+            setTimeout(() => { link.textContent = url; }, 1200);
+          }).catch(() => {
+            window.open(url, '_blank');
+          });
+        } else {
+          window.open(url, '_blank');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
