@@ -20,12 +20,15 @@
     .rain { position: absolute; inset: 0; z-index: 0; overflow: hidden; opacity: 0.19; pointer-events: none; }
     .rain span { position: absolute; top: -10%; left: var(--x); color: #fff; font: 12px/1 monospace; animation: fall var(--duration) linear var(--delay) infinite; user-select: none; }
     @keyframes fall { from { transform: translateY(-10vh); } to { transform: translateY(115vh); } }
-    .gp { position: relative; z-index: 1; width: 90%; max-width: 560px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .gp { position: relative; z-index: 1; width: 90%; max-width: 560px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
     h1 { font-size: clamp(2.5rem, 9vw, 5.5rem); font-weight: 400; letter-spacing: -0.07em; line-height: 0.95; text-align: center; }
-    .card { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-    .ttl { font-size: 1rem; font-weight: 600; letter-spacing: 0.2px; }
+    .card { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+    select { width: 100%; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.25); padding: 12px 14px; font-size: 0.9rem; color: #fff; outline: none; cursor: pointer; appearance: none; }
+    select:focus { border-color: #fff; }
+    select option { background: #000; color: #fff; }
     .cb { width: 100%; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.25); padding: 16px 18px; font-family: monospace; font-size: 0.85rem; color: #fff; word-break: break-all; line-height: 1.5; white-space: pre-wrap; }
-    button { background: #fff; color: #000; border: none; border-radius: 0; padding: 10px 24px; font-weight: 600; font-size: 0.85rem; cursor: pointer; align-self: flex-start; }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: #fff; color: #000; border: none; border-radius: 0; padding: 10px 24px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
     button:hover { background: #eaeaea; }
     .gh { color: #fff; transition: opacity 0.2s; }
     .gh:hover { opacity: 0.65; }
@@ -38,9 +41,12 @@
   <div class="gp">
     <h1>suic1.de</h1>
     <div class="card">
-      <div class="ttl">The Hunt 20 Script</div>
-      <div class="cb" id="cb">loadstring(game:HttpGet("https://suic1.de/the-hunt-20-hub"))()</div>
-      <button id="cp">Copy</button>
+      <select id="sl"></select>
+      <div class="cb" id="cb"></div>
+      <div class="btns">
+        <button id="cp">Copy Script</button>
+        <button id="gj">Open Game</button>
+      </div>
     </div>
     <a class="gh" href="https://github.com/ArchIsDead/ihatemylife" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">
       <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -52,29 +58,74 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const rain = $('rain');
+    const sl = $('sl');
     const cb = $('cb');
     const cp = $('cp');
+    const gj = $('gj');
 
     for (let i = 0; i < 42; i++) {
       const span = document.createElement('span');
-      span.textContent = 'retard';
+      span.textContent = 'skid';
       span.style.setProperty('--delay', (i % 9) * 0.7 + 's');
       span.style.setProperty('--x', (i * 23) % 100 + '%');
       span.style.setProperty('--duration', 5 + (i % 5) + 's');
       rain.appendChild(span);
     }
 
+    const games = [
+      { name: 'Hub', slug: 'the-hunt-20-hub', url: 'https://www.roblox.com/games/74205509034203/The-Hunt-Roblox-20' },
+      { name: 'Crossroads', slug: 'the-hunt-20-crossroads', url: 'https://www.roblox.com/games/1818/Crossroads' },
+      { name: 'Sword Fights on the Heights IV', slug: 'the-hunt-20-sword-fights-on-the-heights-iv', url: 'https://www.roblox.com/games/47324/Sword-Fights-on-the-Heights-IV' },
+      { name: 'Rocket Arena', slug: 'the-hunt-20-rocket-arena', url: 'https://www.roblox.com/games/25415/Rocket-Arena' },
+      { name: 'Chaos Canyon', slug: 'the-hunt-20-chaos-canyon', url: 'https://www.roblox.com/games/14403/Chaos-Canyon' },
+      { name: 'Work at a Pizza Place', slug: 'the-hunt-20-work-at-a-pizza-place', url: 'https://www.roblox.com/games/192800/Work-at-a-Pizza-Place' },
+      { name: 'Natural Disaster Survival', slug: 'the-hunt-20-natural-disaster-survival', url: 'https://www.roblox.com/games/189707/Natural-Disaster-Survival' },
+      { name: 'Base Wars', slug: 'the-hunt-20-base-wars', url: 'https://www.roblox.com/games/18164449/Base-Wars-The-Land' },
+      { name: 'Apocalypse Rising 2', slug: 'the-hunt-20-apocalypse-rising-2', url: 'https://www.roblox.com/games/863266079/Apocalypse-Rising-2' },
+      { name: 'Murder Mystery 2', slug: 'the-hunt-20-murder-mystery-2', url: 'https://www.roblox.com/games/142823291/Murder-Mystery-2' },
+      { name: 'Lumber Tycoon 2', slug: 'the-hunt-20-lumber-tycoon-2', url: 'https://www.roblox.com/games/13822889/Lumber-Tycoon-2' },
+      { name: 'Roblox High School', slug: 'the-hunt-20-roblox-high-school', url: 'https://www.roblox.com/games/9689581/Roblox-High-School' },
+      { name: 'Jailbreak', slug: 'the-hunt-20-jailbreak', url: 'https://www.roblox.com/games/606849621/Jailbreak' },
+      { name: 'Build a Boat for Treasure', slug: 'the-hunt-20-build-a-boat-for-treasure', url: 'https://www.roblox.com/games/537413528/Build-A-Boat-For-Treasure' },
+      { name: 'Adopt Me', slug: 'the-hunt-20-adopt-me', url: 'https://www.roblox.com/games/920587237/Adopt-Me' },
+      { name: 'World // Zero', slug: 'the-hunt-20-world-zero', url: 'https://www.roblox.com/games/2727067538/World-Zero' },
+      { name: 'Piggy', slug: 'the-hunt-20-piggy', url: 'https://www.roblox.com/games/4623386862/Piggy' },
+      { name: 'Berry Avenue RP', slug: 'the-hunt-20-berry-avenue-rp', url: 'https://www.roblox.com/games/8481844229/Berry-Avenue-RP' },
+      { name: 'Blade Ball', slug: 'the-hunt-20-blade-ball', url: 'https://www.roblox.com/games/13772394625/Blade-Ball' },
+      { name: 'Dress to Impress', slug: 'the-hunt-20-dress-to-impress', url: 'https://www.roblox.com/games/15101393044/Dress-to-Impress' },
+      { name: 'Grow a Garden', slug: 'the-hunt-20-grow-a-garden', url: 'https://www.roblox.com/games/126884695634066/Grow-a-Garden' }
+    ];
+
+    games.forEach((g, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = g.name;
+      sl.appendChild(opt);
+    });
+
+    function update() {
+      const g = games[sl.value];
+      cb.textContent = `loadstring(game:HttpGet("https://suic1.de/${g.slug}"))()`;
+    }
+
+    sl.addEventListener('change', update);
+    update();
+
     cp.addEventListener('click', () => {
       const text = cb.textContent;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
           cp.textContent = 'Copied';
-          setTimeout(() => { cp.textContent = 'Copy'; }, 1200);
+          setTimeout(() => { cp.textContent = 'Copy Script'; }, 1200);
         }).catch(() => {
           cp.textContent = 'Failed';
-          setTimeout(() => { cp.textContent = 'Copy'; }, 1200);
+          setTimeout(() => { cp.textContent = 'Copy Script'; }, 1200);
         });
       }
+    });
+
+    gj.addEventListener('click', () => {
+      window.open(games[sl.value].url, '_blank');
     });
   </script>
 </body>
