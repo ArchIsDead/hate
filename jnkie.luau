@@ -21,10 +21,10 @@ suic1de.Storage = {
 }
 
 suic1de.Options = {
-    Keyless = "",
+    Keyless = nil,
     KeylessUi = true,
     Draggable = true,
-    Intro = true,
+    Intro = false,
     IntroDuration = 0.7,
     ToastDuration = 3.2,
     Blur = true,
@@ -4097,10 +4097,10 @@ local configurationDefaults = {
         AutoLoad = true,
     },
     Options = {
-        Keyless = "",
+        Keyless = nil,
         KeylessUi = true,
         Draggable = true,
-        Intro = true,
+        Intro = false,
         IntroDuration = 0.7,
         ToastDuration = 3.2,
     },
@@ -6494,6 +6494,229 @@ suic1de.Destroy=function(self)
     local ok,res=pcall(oldDestroy2,self)
     state.toastHolder=nil
     return ok,res
+end
+colors.background=Color3.fromRGB(7,22,42)
+colors.surface=Color3.fromRGB(14,30,52)
+colors.surface2=Color3.fromRGB(20,43,70)
+colors.surface3=Color3.fromRGB(28,58,91)
+colors.border=Color3.fromRGB(87,137,190)
+colors.borderSoft=Color3.fromRGB(54,96,137)
+colors.text=Color3.fromRGB(241,247,255)
+colors.subtext=Color3.fromRGB(166,194,221)
+colors.faint=Color3.fromRGB(111,151,187)
+colors.accent=Color3.fromRGB(102,177,255)
+colors.accentDeep=Color3.fromRGB(55,119,201)
+colors.success=Color3.fromRGB(101,224,166)
+colors.danger=Color3.fromRGB(255,105,126)
+colors.warning=Color3.fromRGB(255,190,91)
+suic1de.Options.Keyless=nil
+suic1de.Options.Intro=false
+suic1de.Options.Blur=true
+local function acrylicLayer(parent,transparency,z)
+    local layer=new("Frame",{BackgroundColor3=colors.accent,BackgroundTransparency=transparency,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=z or 1},parent)
+    new("UIGradient",{Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(10,35,67)),ColorSequenceKeypoint.new(0.48,Color3.fromRGB(19,63,103)),ColorSequenceKeypoint.new(1,Color3.fromRGB(8,28,54))}),Rotation=118},layer)
+    return layer
+end
+local function glassPanel(parent,size,z)
+    local panel=new("Frame",{BackgroundColor3=colors.surface,BackgroundTransparency=0.12,BorderSizePixel=0,Size=size,ZIndex=z or 10},parent)
+    corner(panel,16)
+    outline(panel,colors.border,0.08,1)
+    local shine=new("Frame",{BackgroundColor3=Color3.fromRGB(126,199,255),BackgroundTransparency=0.88,BorderSizePixel=0,Position=UDim2.fromOffset(1,1),Size=UDim2.new(1,-2,0,1),ZIndex=(z or 10)+1},panel)
+    corner(shine,2)
+    local gloss=new("Frame",{BackgroundColor3=Color3.fromRGB(93,174,255),BackgroundTransparency=0.97,BorderSizePixel=0,Position=UDim2.fromScale(0.03,0.08),Size=UDim2.new(0.58,0,0.84,0),ZIndex=(z or 10)+1},panel)
+    corner(gloss,18)
+    return panel
+end
+local function blueToast(title,message,kind,duration)
+    if not ui.root or not ui.root.Parent then return end
+    if not state.toastHolder or not state.toastHolder.Parent then
+        state.toastHolder=new("Frame",{AnchorPoint=Vector2.new(1,1),BackgroundTransparency=1,Position=UDim2.new(1,-18,1,-18),Size=UDim2.fromOffset(isMobile() and 290 or 350,330),ZIndex=900},ui.root)
+        new("UIListLayout",{HorizontalAlignment=Enum.HorizontalAlignment.Right,Padding=UDim.new(0,9),SortOrder=Enum.SortOrder.LayoutOrder,VerticalAlignment=Enum.VerticalAlignment.Bottom},state.toastHolder)
+    end
+    toastSerial+=1
+    local id=toastSerial
+    local color=toastKindColor(kind)
+    local wrap=new("Frame",{BackgroundTransparency=1,LayoutOrder=id,Size=UDim2.new(1,0,0,76),ZIndex=900},state.toastHolder)
+    local card=new("Frame",{BackgroundColor3=colors.surface,BackgroundTransparency=0.04,BorderSizePixel=0,Position=UDim2.new(1,0,0,0),Size=UDim2.new(1,0,0,70),ZIndex=901},wrap)
+    corner(card,15)
+    outline(card,Color3.fromRGB(92,151,205),0.08,1)
+    local sheen=new("Frame",{BackgroundColor3=Color3.fromRGB(129,203,255),BackgroundTransparency=0.9,BorderSizePixel=0,Size=UDim2.new(1,0,0,1),ZIndex=902},card)
+    corner(sheen,2)
+    local iconBox=new("Frame",{BackgroundColor3=color,BackgroundTransparency=0.78,BorderSizePixel=0,Position=UDim2.fromOffset(12,13),Size=UDim2.fromOffset(42,42),ZIndex=902},card)
+    corner(iconBox,12)
+    outline(iconBox,color,0.56,1)
+    local iconName=toastKindIcon(kind)
+    local glyph=markIcon(putIcon(iconBox,iconName,18,color),iconName)
+    glyph.AnchorPoint=Vector2.new(0.5,0.5)
+    glyph.Position=UDim2.fromScale(0.5,0.5)
+    local heading=new("TextLabel",{BackgroundTransparency=1,Font=fonts.medium,Position=UDim2.fromOffset(66,10),Size=UDim2.new(1,-78,0,19),Text=tostring(title or ""),TextColor3=colors.text,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=902},card)
+    local body=new("TextLabel",{BackgroundTransparency=1,Font=fonts.body,Position=UDim2.fromOffset(66,30),Size=UDim2.new(1,-78,0,22),Text=tostring(message or ""),TextColor3=colors.subtext,TextSize=10,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=902},card)
+    local rail=new("Frame",{BackgroundColor3=colors.surface3,BorderSizePixel=0,Position=UDim2.fromOffset(66,58),Size=UDim2.new(1,-78,0,2),ZIndex=902},card)
+    corner(rail,2)
+    local fill=new("Frame",{BackgroundColor3=color,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=903},rail)
+    corner(fill,2)
+    local d=math.max(0.8,tonumber(duration) or suic1de.Options.ToastDuration or 3.2)
+    tween(card,0.42,{Position=UDim2.new(0,0,0,0)},Enum.EasingStyle.Back,Enum.EasingDirection.Out)
+    tween(glyph,0.28,{Rotation=0,ImageTransparency=0},Enum.EasingStyle.Quart)
+    tween(fill,d,{Size=UDim2.fromScale(0,1)},Enum.EasingStyle.Linear,Enum.EasingDirection.In)
+    task.delay(d,function()
+        if not wrap.Parent then return end
+        tween(card,0.24,{Position=UDim2.new(1,12,0,0)},Enum.EasingStyle.Quart,Enum.EasingDirection.In)
+        tween(glyph,0.18,{ImageTransparency=1},Enum.EasingStyle.Quart)
+        task.delay(0.27,function()
+            if state.toasts[id] then state.toasts[id]=nil end
+            if wrap.Parent then wrap:Destroy() end
+        end)
+    end)
+    state.toasts[id]=wrap
+end
+makeToast=blueToast
+buildMain=function()
+    suic1de:ValidateAll()
+    loadIconPacks()
+    state.alive=false
+    local parent=getGuiParent()
+    local old=parent:FindFirstChild("suic1de")
+    if old then old:Destroy() end
+    ui.root=new("ScreenGui",{Name="suic1de",IgnoreGuiInset=true,ResetOnSpawn=false,DisplayOrder=999999,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},parent)
+    local backdrop=new("Frame",{BackgroundColor3=Color3.fromRGB(7,22,42),BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=1},ui.root)
+    ui.backdrop=backdrop
+    new("UIGradient",{Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(5,19,38)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(12,45,76)),ColorSequenceKeypoint.new(1,Color3.fromRGB(6,24,49))}),Rotation=105},backdrop)
+    acrylicLayer(backdrop,0.58,2)
+    local paneA=new("Frame",{BackgroundColor3=Color3.fromRGB(89,173,246),BackgroundTransparency=0.94,BorderSizePixel=0,Position=UDim2.new(-0.08,0,-0.2,0),Size=UDim2.new(0.7,0,1.45,0),Rotation=13,ZIndex=3},backdrop)
+    corner(paneA,32)
+    local paneB=new("Frame",{BackgroundColor3=Color3.fromRGB(63,133,214),BackgroundTransparency=0.95,BorderSizePixel=0,Position=UDim2.new(0.58,0,-0.15,0),Size=UDim2.new(0.52,0,1.4,0),Rotation=-16,ZIndex=3},backdrop)
+    corner(paneB,32)
+    new("Frame",{BackgroundColor3=Color3.fromRGB(1,9,18),BackgroundTransparency=0.76,BorderSizePixel=0,Size=UDim2.fromScale(1,1),ZIndex=4},backdrop)
+    local camera=workspace.CurrentCamera
+    local scale=new("UIScale",{Scale=1},ui.root)
+    local function fit()
+        if not scale.Parent then return end
+        local v=camera and camera.ViewportSize or Vector2.new(800,600)
+        local target=math.min(v.X/860,v.Y/620)
+        if v.X<600 then target=math.min(v.X/370,v.Y/620) end
+        scale.Scale=math.clamp(target,0.76,1.04)
+    end
+    fit()
+    if camera then addConnection(camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)) end
+    enableSuicBlur()
+    local w=isMobile() and math.max(304,math.min(344,(camera and camera.ViewportSize.X or 360)-24)) or 456
+    local h=isMobile() and 338 or 352
+    ui.card=glassPanel(ui.root,UDim2.fromOffset(w,h),20)
+    ui.card.AnchorPoint=Vector2.new(0.5,0.5)
+    ui.card.Position=UDim2.fromScale(0.5,0.5)
+    local shell=new("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(isMobile() and 18 or 22,18),Size=UDim2.new(1,-(isMobile() and 36 or 44),1,-36),ZIndex=22},ui.card)
+    new("UIListLayout",{Padding=UDim.new(0,isMobile() and 10 or 12),HorizontalAlignment=Enum.HorizontalAlignment.Center,SortOrder=Enum.SortOrder.LayoutOrder},shell)
+    local header=new("Frame",{BackgroundTransparency=1,Size=UDim2.new(1,0,0,58),ZIndex=23},shell)
+    local iconWrap=new("Frame",{BackgroundColor3=colors.surface2,BackgroundTransparency=0.18,BorderSizePixel=0,Position=UDim2.fromOffset(0,3),Size=UDim2.fromOffset(38,38),ZIndex=24},header)
+    corner(iconWrap,12)
+    outline(iconWrap,colors.border,0.08,1)
+    local logo=markIcon(putIcon(iconWrap,"key",19,colors.accent),"key")
+    logo.AnchorPoint=Vector2.new(0.5,0.5)
+    logo.Position=UDim2.fromScale(0.5,0.5)
+    local title=new("TextLabel",{BackgroundTransparency=1,Font=fonts.title,Position=UDim2.fromOffset(50,0),Size=UDim2.new(1,-88,0,28),Text=tostring(suic1de.Appearance.Title or "suic1.de"),TextColor3=colors.text,TextSize=isMobile() and 20 or 22,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=24},header)
+    local subtitle=new("TextLabel",{BackgroundTransparency=1,Font=fonts.body,Position=UDim2.fromOffset(50,30),Size=UDim2.new(1,-56,0,18),Text=tostring(suic1de.Appearance.Subtitle or "Enter your key"),TextColor3=colors.subtext,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=24},header)
+    ui.title=title
+    ui.subtitle=subtitle
+    local close=components.createCloseButton(header,function() suic1de:Destroy() end)
+    close.Position=UDim2.new(1,0,0,3)
+    close.AnchorPoint=Vector2.new(1,0)
+    ui.close=close
+    local line=new("Frame",{BackgroundColor3=Color3.fromRGB(91,151,201),BackgroundTransparency=0.68,BorderSizePixel=0,Size=UDim2.new(1,0,0,1),ZIndex=23},shell)
+    ui.divider=line
+    local fieldLabel=new("TextLabel",{BackgroundTransparency=1,Font=fonts.medium,Size=UDim2.new(1,0,0,15),Text="Key",TextColor3=colors.subtext,TextSize=9,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=23},shell)
+    local field=new("Frame",{BackgroundColor3=Color3.fromRGB(8,28,50),BackgroundTransparency=0.08,BorderSizePixel=0,Size=UDim2.new(1,0,0,isMobile() and 50 or 54),ZIndex=23},shell)
+    corner(field,13)
+    local fs=outline(field,colors.borderSoft,0.02,1)
+    local keySlot=new("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(10,0),Size=UDim2.fromOffset(28,54),ZIndex=24},field)
+    local keyGlyph=markIcon(putIcon(keySlot,"key",16,colors.faint),"key")
+    keyGlyph.AnchorPoint=Vector2.new(0.5,0.5)
+    keyGlyph.Position=UDim2.fromScale(0.5,0.5)
+    ui.input=new("TextBox",{BackgroundTransparency=1,ClearTextOnFocus=false,Font=fonts.mono,PlaceholderText="",Position=UDim2.fromOffset(44,0),Size=UDim2.new(1,-82,1,0),Text="",TextColor3=colors.text,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=24},field)
+    local erase=new("TextButton",{AutoButtonColor=false,BackgroundTransparency=1,Font=fonts.medium,Position=UDim2.new(1,-38,0,0),Size=UDim2.fromOffset(34,54),Text="×",TextColor3=colors.faint,TextSize=18,ZIndex=25},field)
+    addConnection(erase.MouseButton1Click:Connect(function() ui.input.Text="" ui.input:CaptureFocus() end))
+    addConnection(ui.input.Focused:Connect(function() tween(fs,0.14,{Color=colors.accent,Transparency=0}) tween(keyGlyph,0.14,{ImageColor3=colors.accent}) end))
+    addConnection(ui.input.FocusLost:Connect(function() tween(fs,0.14,{Color=colors.borderSoft,Transparency=0.02}) tween(keyGlyph,0.14,{ImageColor3=colors.faint}) end))
+    ui.verify=iconButton(shell,"Verify","shield",isMobile() and 268 or 412,true)
+    local actions=new("Frame",{BackgroundTransparency=1,Size=UDim2.new(1,0,0,42),ZIndex=23},shell)
+    new("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,HorizontalAlignment=Enum.HorizontalAlignment.Center,Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},actions)
+    ui.getKey=iconButton(actions,"Get Key","link",isMobile() and 130 or 184,false)
+    ui.discord=iconButton(actions,"Discord","discord",isMobile() and 130 or 184,false)
+    ui.getKey.Visible=tostring(suic1de.Links.GetKey or "")~=""
+    ui.discord.Visible=tostring(suic1de.Links.Discord or "")~=""
+    actions.Visible=ui.getKey.Visible or ui.discord.Visible
+    ui.shop=nil
+    if suic1de.Shop.Enabled and tostring(suic1de.Shop.Link or "")~="" then
+        ui.shop=iconButton(shell,tostring(suic1de.Shop.ButtonText or "Buy"),"cart",isMobile() and 268 or 412,false)
+    end
+    local function verify(value)
+        value=suic1de:NormalizeKey(value)
+        if state.verifying then return end
+        if os.clock()<state.cooldown then makeToast("Try again",suic1de:GetCooldownText(),"warning") return end
+        if value=="" then makeToast("Key required","Enter your key","error") return end
+        local cb=suic1de.Callbacks.OnVerify
+        if type(cb)~="function" then makeToast("Setup error","Verifier not set","error") return end
+        state.verifying=true
+        setButtonBusy(ui.verify,true,"Verify","shield")
+        local ok,raw=pcall(cb,value)
+        local valid,reason=false,"KEY_INVALID"
+        if ok then valid,reason=normalizeResult(raw) else reason="ERROR" end
+        if valid then
+            state.failures=0
+            setAccepted(value)
+            saveKey(value)
+            setButtonBusy(ui.verify,false,"Verified","check")
+            makeToast("Access granted","Key accepted","success",2.2)
+            local cb2=suic1de.Callbacks.OnSuccess
+            if type(cb2)=="function" then task.spawn(function() pcall(cb2,value) end) end
+            task.delay(0.38,function() if state.alive then suic1de:Destroy() end end)
+            return
+        end
+        state.verifying=false
+        setButtonBusy(ui.verify,false,"Verify","shield")
+        if not suic1de:IsTransientError(reason) then suic1de:CountFailure(reason) end
+        local message=suic1de:GetErrorText(reason)
+        makeToast(suic1de:IsTransientError(reason) and "Connection issue" or "Access denied",message,suic1de:IsTransientError(reason) and "warning" or "error")
+        local cb3=suic1de.Callbacks.OnFail
+        if type(cb3)=="function" then task.spawn(function() pcall(cb3,reason,value) end) end
+        if reason=="HWID_BANNED" then task.delay(2,function() local lp=services.Players.LocalPlayer if lp then pcall(function() lp:Kick("Access blocked") end) end end) end
+    end
+    suic1de._verify=verify
+    addConnection(ui.verify.MouseButton1Click:Connect(function() verify(ui.input.Text) end))
+    addConnection(ui.input.FocusLost:Connect(function(enter) if enter then verify(ui.input.Text) end end))
+    addConnection(services.Input.InputBegan:Connect(function(inp,processed) if processed or not state.alive then return end if inp.KeyCode==Enum.KeyCode.Return and ui.input and ui.input:IsFocused() then verify(ui.input.Text) end end))
+    addConnection(ui.getKey.MouseButton1Click:Connect(function()
+        local link=tostring(suic1de.Links.GetKey or "")
+        if link=="" then makeToast("Get Key","Link not set","warning") return end
+        local opened=false
+        if type(cloneref)=="function" then
+            local ok,web=pcall(function() return cloneref(game:GetService("WebViewService")) end)
+            if ok and web then opened=pcall(function() web:OpenWindowV2(link) end) end
+        end
+        if not opened then if clipboard(link) then makeToast("Get Key","Copied","success") else makeToast("Get Key","Unavailable","error") end end
+    end))
+    addConnection(ui.discord.MouseButton1Click:Connect(function()
+        local link=tostring(suic1de.Links.Discord or "")
+        if link=="" then makeToast("Discord","Link not set","warning") return end
+        if clipboard(link) then makeToast("Discord","Copied","success") else makeToast("Discord","Unavailable","error") end
+    end))
+    if ui.shop then addConnection(ui.shop.MouseButton1Click:Connect(function()
+        local link=tostring(suic1de.Shop.Link or "")
+        local opened=false
+        if type(cloneref)=="function" then local ok,web=pcall(function() return cloneref(game:GetService("WebViewService")) end) if ok and web then opened=pcall(function() web:OpenWindowV2(link) end) end end
+        if not opened and clipboard(link) then makeToast("Premium","Copied","success") end
+    end)) end
+    if suic1de.Options.Draggable then
+        local dragging=false
+        local startPos
+        local startInput
+        addConnection(ui.card.InputBegan:Connect(function(inp) if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then dragging=true startInput=inp.Position startPos=ui.card.Position end end))
+        addConnection(ui.card.InputEnded:Connect(function(inp) if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then dragging=false end end))
+        addConnection(services.Input.InputChanged:Connect(function(inp) if not dragging then return end if inp.UserInputType~=Enum.UserInputType.MouseMovement and inp.UserInputType~=Enum.UserInputType.Touch then return end local d=inp.Position-startInput ui.card.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y) end))
+    end
+    task.delay(0.05,function() if ui.root and ui.root.Parent then refreshIcons(ui.root) end end)
+    task.delay(0.65,function() if ui.root and ui.root.Parent then refreshIcons(ui.root) end end)
+    state.alive=true
 end
 suic1de.IconUrls={Lucide=ICON_LUCIDE_URL,Solar=ICON_SOLAR_URL}
 suic1de.IconPacks=iconPacks
