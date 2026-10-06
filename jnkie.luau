@@ -1,14 +1,17 @@
--- i hate this dont pmo
+--[[
+⠀this is just a test
+]]--
+
 local s={}
-s.Appearance={Title="suic1.de",Subtitle="Enter your key",Icon=""}
-s.Links={GetKey="",Discord=""}
+s.Appearance={Title="RFour Hub",Subtitle="idc",Icon=""}
+s.Links={GetKey="",Discord="https://suic1.de/discord"}
 s.LinkActions={GetKey={Clipboard=true,WebView=true},Discord={Clipboard=true,WebView=false},Buy={Clipboard=true,WebView=true}}
-s.Storage={FileName="suic1de_key",Folder="suic1de",Remember=true,AutoLoad=true}
+s.Storage={FileName="RFOUR_KEY",Folder="",Remember=true,AutoLoad=true}
 s.Options={Keyless=nil,KeylessUi=true,Draggable=true,Intro=false,Blur=true,ToastDuration=3.2}
-s.Shop={Enabled=false,Title="",Subtitle="",ButtonText="Buy",Icon="",Link=""}
+s.Shop={Enabled=true,Title="",Subtitle="",ButtonText="Buy",Icon="",Link="https://arch.rest/buy"}
 s.Callbacks={OnVerify="",OnSuccess="",OnFail="",OnReady=""}
 s.Theme={bg=Color3.fromRGB(5,5,6),panel=Color3.fromRGB(18,19,21),panel2=Color3.fromRGB(24,25,28),panel3=Color3.fromRGB(31,32,35),edge=Color3.fromRGB(61,62,66),edge2=Color3.fromRGB(43,44,47),text=Color3.fromRGB(245,245,245),sub=Color3.fromRGB(157,157,160),muted=Color3.fromRGB(101,102,105),white=Color3.fromRGB(255,255,255)}
-s.Defaults={Appearance={Title="suic1.de",Subtitle="Enter your key",Icon=""},Links={GetKey="",Discord=""},LinkActions={GetKey={Clipboard=true,WebView=true},Discord={Clipboard=true,WebView=false},Buy={Clipboard=true,WebView=true}},Storage={FileName="suic1de_key",Folder="suic1de",Remember=true,AutoLoad=true},Options={Keyless=nil,KeylessUi=true,Draggable=true,Intro=false,Blur=true,ToastDuration=3.2},Shop={Enabled=false,Title="",Subtitle="",ButtonText="Buy",Icon="",Link=""}}
+s.Defaults={Appearance={Title="RFour Hub",Subtitle="idc",Icon=""},Links={GetKey="",Discord="https://suic1.de/discord"},LinkActions={GetKey={Clipboard=true,WebView=true},Discord={Clipboard=true,WebView=false},Buy={Clipboard=true,WebView=true}},Storage={FileName="RFOUR_KEY",Folder="",Remember=true,AutoLoad=true},Options={Keyless=nil,KeylessUi=true,Draggable=true,Intro=false,Blur=true,ToastDuration=3.2},Shop={Enabled=true,Title="",Subtitle="",ButtonText="Buy",Icon="",Link="https://arch.rest/buy"}}
 local T=game:GetService("TweenService")
 local U=game:GetService("UserInputService")
 local L=game:GetService("Lighting")
@@ -68,10 +71,13 @@ function s:CheckHttp() return type(game.HttpGet)=="function" end
 function s:CheckLoadstring() return type(loadstring)=="function" end
 function s:Compatibility() return {Filesystem=self:CheckFilesystem(),Clipboard=self:CheckClipboard(),WebView=self:CheckWebView(),Http=self:CheckHttp(),Loadstring=self:CheckLoadstring(),Mobile=self:IsMobile()} end
 local function path()
- return tostring(s.Storage.Folder or "suic1de").."/"..tostring(s.Storage.FileName or "suic1de_key")
+ local f=tostring(s.Storage.Folder or "")
+ local n=tostring(s.Storage.FileName or "RFOUR_KEY")
+ if f=="" then return n end
+ return f.."/"..n
 end
 local function setupFolder()
- if type(isfolder)=="function" and type(makefolder)=="function" then local f=tostring(s.Storage.Folder or "suic1de");if not isfolder(f) then pcall(makefolder,f) end end
+ if type(isfolder)=="function" and type(makefolder)=="function" then local f=tostring(s.Storage.Folder or "");if f~="" and not isfolder(f) then pcall(makefolder,f) end end
 end
 function s:GetSavedKey()
  if not (self.Storage.Remember and type(isfile)=="function" and type(readfile)=="function") then return nil end
@@ -426,14 +432,15 @@ function s:LaunchJunkie(cfg)
  local service=tostring(cfg.Service or cfg.service or "")
  local identifier=tostring(cfg.Identifier or cfg.identifier or "")
  local provider=tostring(cfg.Provider or cfg.provider or "Mixed")
- local url=tostring(cfg.Url or cfg.URL or "https://jnkie.com/sdk/library.lua")
- if service=="" or identifier=="" then self:Toast("Setup error","Service or identifier is missing","error");return false end
+ local url=tostring(cfg.Url or cfg.URL or "")
+ if service=="" or identifier=="" then self:Toast("Service or identifier is missing","error");return false end
+ if url=="" then self:Toast("Set the JNKIE SDK URL","error");return false end
  st.junkie={service=service,identifier=identifier,provider=provider,url=url}
  self:ValidateAll()
  local root=build()
  task.spawn(function()
   local lib=sdkLoad(st.junkie)
-  if not lib then self:Toast("Verifier offline",errText(st.sdkErr),"error");return end
+  if not lib then self:Toast(errText(st.sdkErr),"error");return end
   if self.Options.Keyless==nil then
    local ok,why,res=jcheck("KEYLESS")
    if ok and why=="KEYLESS" then
@@ -461,7 +468,7 @@ function s:LaunchJunkie(cfg)
 end
 function s:Launch()
  if self.Options.Keyless==true then local root=build();task.spawn(function() success("KEYLESS") end);return root end
- if type(self.Callbacks.OnVerify)~="function" then self:Toast("Setup error","Set OnVerify or use LaunchJunkie","error");return false end
+ if type(self.Callbacks.OnVerify)~="function" then self:Toast("Set OnVerify or use LaunchJunkie","error");return false end
  st.junkie=nil;return build()
 end
 s.IconUrls={Lucide=ICON_L,Solar=ICON_S}
