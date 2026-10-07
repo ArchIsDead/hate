@@ -1424,6 +1424,22 @@ lib._enhanceOption=function(self,o)
     if o._click and o.cb then local baseCb=o.cb; o.cb=function(...) local r=baseCb(...); for _,fn in ipairs(o._click) do pcall(fn,...) end; return r end end
     if o.kind=="toggle" then o.Value=o.state; o.State=o.state end
     if o.kind=="slider" then o.Value=o.value; o.Min=o.min; o.Max=o.max; o.Rounding=o.step; o.Prefix=o.prefix; o.Suffix=o.suffix end
+    if o.kind=="progress" then
+        o.Value=o.value
+        o.Min=o.min
+        o.Max=o.max
+        o.GetPercentage=o.GetPercentage or function(s)
+            local a=tonumber(s.min) or 0
+            local b=tonumber(s.max) or 100
+            if b==a then return 0 end
+            return ((tonumber(s.value) or a)-a)/(b-a)*100
+        end
+        o.GetValue=o.GetValue or function(s) return s.value end
+        local oldSet=o.SetValue
+        if oldSet then
+            o.SetValue=function(s,v) local r=oldSet(s,v); s.Value=s.value; return r end
+        end
+    end
     if o.kind=="box" then o.Value=o.value; o.Text=o.text; o.Placeholder=o.placeholder end
     if o.kind=="list" then o.Value=o.value; o.Values=o.values; o.Multi=o.multi; o.Searchable=o.searchable end
     if o.kind=="bind" then o.Key=o.key; o.Mode=o.mode; o.Modifiers=o.modifiers or {} end
@@ -1493,7 +1509,64 @@ lib.AddDraggableButton=function(self,text,callback) return dragWidget(self,"butt
 lib.AddDraggableImageButton=function(self,text,image,callback) local m=dragWidget(self,"button",text,callback); if m then m.Text=""; m.AutoButtonColor=false; local i=mk("ImageLabel",{Size=UDim2.fromOffset(16,16),Position=UDim2.fromOffset(4,4),BackgroundTransparency=1,Image=typeof(image)=="number" and "rbxassetid://"..tostring(image) or tostring(image or ""),Parent=m}) end; return m end
 lib.AddDraggableMenu=function(self,name) return self:AddDraggableLabel(name) end
 
+function lib:RunExample()
+    if self.Unloaded then return nil end
+    self:SetAccent(Color3.fromRGB(255,65,65))
+    self:SetToggleKey(Enum.KeyCode.RightControl)
+    local w=self:CreateWindow({Title="LibraryNew Example",AutoShow=true,ToggleKeybind=Enum.KeyCode.RightControl})
+    local main=w:AddFolder("Main")
+    local t=main:AddToggle("ExampleToggle",{Text="Example Toggle",Default=true,Tooltip="Toggle with callbacks and picker chaining.",Callback=function(v) self:Notify("Toggle",tostring(v),1.5) end})
+    t:OnChanged(function(v) self.flags.ExampleToggle=v end)
+    t:AddColorPicker("ExampleColor",{Text="Accent Color",Default=Color3.fromRGB(255,65,65)})
+    t:AddKeyPicker("ExampleKey",{Text="Toggle Key",Default=Enum.KeyCode.F,Mode="Toggle"})
+    main:AddButton("Example Button",{Tooltip="Button callback example.",Callback=function() self:Notify("Button","Clicked",2) end})
+    main:AddSlider("ExampleSlider",{Text="Slider",Min=0,Max=100,Default=50,Rounding=1,Prefix="",Suffix="%",Callback=function(v) end})
+    main:AddDropdown("ExampleDropdown",{Text="Dropdown",Values={"One","Two","Three"},Default="One",Searchable=true,Callback=function(v) end})
+    main:AddDropdown("ExampleMulti",{Text="Multi Select",Values={"A","B","C","D"},Default={"A","C"},Multi=true,Searchable=true,Callback=function(v) end})
+    main:AddInput("ExampleInput",{Text="Input",Default="Hello",Placeholder="Type here...",Callback=function(v) end})
+    main:AddInput("ExampleNumber",{Text="Number",Default="25",Numeric=true,Callback=function(v) end})
+    main:AddKeybind("ExampleBind",{Text="Keybind",Default=Enum.KeyCode.G,Mode="Toggle",ChangedCallback=function(k) end,Callback=function(v) end})
+    main:AddColorPicker("ExampleColorPicker",{Text="Color Picker",Default=Color3.fromRGB(80,200,100),Transparency=0})
+    main:AddLabel("LibraryNew compact example")
+    main:AddParagraph({Title="Paragraph",Description="This demonstrates the paragraph element without changing the compact renderer."})
+    main:AddDivider()
+    local stat=main:AddStat("ExampleStat",{Default=42}); stat:Set(84)
+    local prog=main:AddProgress("ExampleProgress",{Min=0,Max=100,Default=65}); prog:Set(75)
+    main:AddConsole("ExampleConsole",{Text="Console ready."}):Append("Example line")
+    local nested=main:AddFolder({Name="Nested",Tooltip="Nested compact section."})
+    local dep=nested:AddToggle("ShowDependent",{Text="Show dependent",Default=true})
+    local dependent=nested:AddLabel("Dependent element")
+    dependent:AddDependency("ShowDependent",true)
+    local misc=w:AddFolder("Functions")
+    misc:AddButton("Notify",{Callback=function() self:Notify("Example","Notification API",2) end})
+    misc:AddButton("Search",{Callback=function() self:Search("Example") end})
+    misc:AddButton("Save Config",{Callback=function() self:SaveConfig("example") end})
+    misc:AddButton("Load Config",{Callback=function() self:LoadConfig("example") end})
+    misc:AddButton("Change Accent",{Callback=function() self:SetAccent(Color3.fromRGB(80,200,100)) end})
+    misc:AddButton("Center",{Callback=function() if w.Center then w:Center() end end})
+    misc:AddButton("Minimize",{Callback=function() w:Minimize() end})
+    misc:AddButton("Unload",{Callback=function() self:Unload() end})
+    local tabbox=w:AddLeftTabbox({Name="ExampleTabs"})
+    local tab1=tabbox:AddTab({Name="Tab 1"})
+    tab1:AddLabel("Tabbox API example")
+    tab1:AddButton("Tab Button",{Callback=function() self:Notify("Tab","Works",1.5) end})
+    local tab2=tabbox:AddTab({Name="Tab 2"})
+    tab2:AddSlider("TabSlider",{Min=0,Max=10,Default=5})
+    self:OnUnload(function() end)
+    self:Notify("LibraryNew","Example loaded",3)
+    self:Init()
+    return w
+end
+
+
 lib.KeybindFrame=lib.KeybindFrame or {Visible=false}
 lib.Scheme=lib.Scheme or {Red=TH.acc,Text=Color3.fromRGB(240,240,240),Dim=Color3.fromRGB(140,140,150),Accent=TH.acc}
+
+if type(getgenv)=="function" then
+    local env=getgenv()
+    if env.LibraryNewRunExample==true then
+        task.defer(function() lib:RunExample() end)
+    end
+end
 
 return lib
