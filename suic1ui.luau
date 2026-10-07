@@ -141,7 +141,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 				dragging = true
 				dragStart = input.Position
 				startPos = dragObject.Position
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+			elseif Input.UserInputType == Enum.UserInputType.Touch then
 				dragObject = parentTable.main
 				dragging = true
 				dragStart = input.Position
@@ -158,7 +158,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			title.InputEnded:connect(function(input)
 			if input.UserInputType == ui then
 				dragging = false
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+			elseif Input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
 			end
 		end)
@@ -174,7 +174,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
 			end
 			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			parentTable.open = not parentTable.open
 			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
 			if subHolder then
@@ -272,7 +272,7 @@ function createToggle(option, parent)
 	main.InputBegan:connect(function(input)
 		if input.UserInputType == ui then
 			option:SetState(not option.state)
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			option:SetState(not option.state)
 		end
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -354,7 +354,7 @@ function createButton(option, parent)
 			clicking = true
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			option.callback()
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			library.flags[option.flag] = true
 			clicking = true
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
@@ -374,7 +374,7 @@ function createButton(option, parent)
 			else
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			clicking = false
 			if inContact then
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
@@ -447,7 +447,7 @@ local function createBind(option, parent)
 			binding = true
 			bindinput.Text = "..."
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			binding = true
 			bindinput.Text = "..."
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
@@ -615,7 +615,7 @@ local function createSlider(option, parent)
 			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			sliding = true
 			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			sliding = true
@@ -646,7 +646,7 @@ local function createSlider(option, parent)
 				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			sliding = false
 			if inContact then
 				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
@@ -804,7 +804,7 @@ local function createList(option, parent, holder)
 					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
 				end
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			if library.activePopup then
 				library.activePopup:Close()
 			end
@@ -862,7 +862,7 @@ local function createList(option, parent, holder)
 				clicking = true
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
 				self:SetValue(value)
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+			elseif Input.UserInputType == Enum.UserInputType.Touch then
 				clicking = true
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
 				self:SetValue(value)
@@ -879,7 +879,7 @@ local function createList(option, parent, holder)
 			if input.UserInputType == ui then
 				clicking = false
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+			elseif Input.UserInputType == Enum.UserInputType.Touch then
 				clicking = false
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
 			end
@@ -1005,7 +1005,7 @@ local function createBox(option, parent)
 	main.InputBegan:connect(function(input)
 		if input.UserInputType == ui then
 			if not focused then inputvalue:CaptureFocus() end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			if not focused then inputvalue:CaptureFocus() end
 		end
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -1122,7 +1122,7 @@ local function createColorPickerWindow(option)
 			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
 			X = X < 0 and 0 or X > 0.995 and 0.995 or X
 			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editinghue = true
 			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
 			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
@@ -1143,7 +1143,7 @@ local function createColorPickerWindow(option)
 	option.hue.InputEnded:connect(function(Input)
 		if Input.UserInputType == ui then
 			editinghue = false
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editinghue = false
 		end
 	end)
@@ -1182,7 +1182,7 @@ local function createColorPickerWindow(option)
 			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
 			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
 			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editingsatval = true
 			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
 			Y = (option.satval.AbsolutePosition.Y + option.satval.AbsoluteSize.Y) - option.satval.AbsolutePosition.Y
@@ -1209,7 +1209,7 @@ local function createColorPickerWindow(option)
 	option.satval.InputEnded:connect(function(Input)
 		if Input.UserInputType == ui then
 			editingsatval = false
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editingsatval = false
 		end
 	end)
@@ -1257,7 +1257,7 @@ local function createColorPickerWindow(option)
 		if Input.UserInputType == ui and not rainbowEnabled then
 			previousColors = {originalColor}
 			option:SetColor(originalColor)
-		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+		elseif Input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
 			previousColors = {originalColor}
 			option:SetColor(originalColor)
 		end
@@ -1305,7 +1305,7 @@ local function createColorPickerWindow(option)
 			if #previousColors ~= 1 then
 				table.remove(previousColors, #previousColors)
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+		elseif Input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
 			local Num = #previousColors == 1 and 0 or 1
 			option:SetColor(previousColors[#previousColors - Num])
 			if #previousColors ~= 1 then
@@ -1353,7 +1353,7 @@ local function createColorPickerWindow(option)
 		if Input.UserInputType == ui and not rainbowEnabled then
 			table.insert(previousColors, currentColor)
 			option:SetColor(currentColor)
-		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+		elseif Input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
 			table.insert(previousColors, currentColor)
 			option:SetColor(currentColor)
 		end
@@ -1407,7 +1407,7 @@ local function createColorPickerWindow(option)
 				option:SetColor(previousColors[#previousColors])
 				option.rainbowText.TextColor3 = Color3.fromRGB(255, 255, 255)
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			rainbowEnabled = not rainbowEnabled
 			if rainbowEnabled then
 				rainbowLoop = runService.Heartbeat:connect(function()
@@ -1496,7 +1496,7 @@ local function createColor(option, parent, holder)
 					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
 				end
 			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			if not option.mainHolder then createColorPickerWindow(option) end
 			if library.activePopup then
 				library.activePopup:Close()
@@ -1791,7 +1791,7 @@ inputService.InputBegan:connect(function(input)
 				library.activePopup:Close()
 			end
 		end
-	elseif input.UserInputType == Enum.UserInputType.Touch then
+	elseif Input.UserInputType == Enum.UserInputType.Touch then
 		if library.activePopup then
 			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
 				library.activePopup:Close()
@@ -2033,7 +2033,7 @@ local function extRenderOption(lib, option, parent)
 		local layout=extCreate("UIListLayout", {Padding=UDim.new(0,2), Parent=scroll})
 		option._gui=frame; option._console=scroll
 		option.Append=function(self,text) local lineGui=extCreate("TextLabel", {Size=UDim2.new(1,-4,0,16), BackgroundTransparency=1, Text=tostring(text), TextColor3=extTheme.Dim, TextSize=11, Font=Enum.Font.Code, TextXAlignment=Enum.TextXAlignment.Left, Parent=self._console}); return lineGui end
-		option.Clear=function(self) if self._console then for _,c in ipairs(self._console:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end end; return self end end
+		option.Clear=function(self) if self._console then for _,c in ipairs(self._console:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end end; return self end
 		if option.Text ~= "" then option:Append(option.Text) end
 	end
 	option.__extendedRendered=true
