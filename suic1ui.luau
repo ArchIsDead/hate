@@ -1394,6 +1394,36 @@ local oldAddOptionEnhance=lib._enhanceOption
 lib._enhanceOption=function(self,o)
     oldAddOptionEnhance(self,o)
     if not o then return o end
+    if o.kind=="progress" then
+        o.GetPercentage=function(s)
+            local a=tonumber(s.min) or 0
+            local b=tonumber(s.max) or 100
+            if b==a then return 0 end
+            return ((tonumber(s.value) or a)-a)/(b-a)*100
+        end
+        o.GetValue=function(s) return s.value end
+    elseif o.kind=="console" then
+        if type(o.Append)~="function" then
+            o.Append=function(s,v)
+                s.value=(s.value=="" and "" or tostring(s.value).."\n")..tostring(v or "")
+                if s.main then
+                    local label=s.main:FindFirstChildWhichIsA("TextLabel",true)
+                    if label then label.Text=s.value end
+                end
+                return s
+            end
+        end
+        if type(o.Clear)~="function" then
+            o.Clear=function(s)
+                s.value=""
+                if s.main then
+                    local label=s.main:FindFirstChildWhichIsA("TextLabel",true)
+                    if label then label.Text="" end
+                end
+                return s
+            end
+        end
+    end
     o.Name=o.Name or o.flag or o.text
     o.Text=o.text
     o.Tooltip=o.desc
