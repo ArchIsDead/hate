@@ -52,17 +52,26 @@ function library:Create(class, properties)
 	properties = typeof(properties) == "table" and properties or {}
 	local inst = Instance.new(class)
 	for property, value in next, properties do
-		inst[property] = value
+		pcall(function() inst[property] = value end)
+	end
+	if (class == "TextLabel" or class == "TextButton" or class == "TextBox") and self.Font then
+		pcall(function() inst.Font = self.Font end)
 	end
 	return inst
 end
 
 local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
+	local windowWidth = 260
+	local camera = workspace.CurrentCamera
+	local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
+	local maxHeight = math.max(240, math.min(560, viewport.Y - 56))
+	local visibleHeight = math.max(1, maxHeight - size)
+	local xPosition = subHolder and (20 + (250 * (parentTable.position or 0))) or math.max(8, math.floor((viewport.X - windowWidth) * 0.5))
 	parentTable.main = library:Create("ImageButton", {
 		LayoutOrder = subHolder and parentTable.position or 0,
-		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
-		Size = UDim2.new(0, 230, 0, size),
+		Position = UDim2.fromOffset(xPosition, subHolder and 0 or 12),
+		Size = UDim2.fromOffset(windowWidth, size),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageColor3 = Color3.fromRGB(20, 20, 20),
@@ -79,7 +88,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			Size = UDim2.new(1, 0, 0, size),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://3570695787",
-			ImageColor3 = parentTable.open and (subHolder and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)) or (subHolder and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)),
+			ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6),
 			ScaleType = Enum.ScaleType.Slice,
 			SliceCenter = Rect.new(100, 100, 100, 100),
 			SliceScale = 0.04,
@@ -88,117 +97,107 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	end
 	
 	local title = library:Create("TextLabel", {
-		Size = UDim2.new(1, 0, 0, size),
+		Size = UDim2.new(1, -34, 0, size),
+		Position = UDim2.fromOffset(8, 0),
 		BackgroundTransparency = subHolder and 0 or 1,
 		BackgroundColor3 = Color3.fromRGB(10, 10, 10),
 		BorderSizePixel = 0,
-		Text = holderTitle,
-		TextSize = subHolder and 16 or 17,
-		Font = Enum.Font.LuckiestGuy,
+		Text = tostring(holderTitle or "Window"),
+		TextSize = subHolder and 15 or 17,
+		Font = library.Font or Enum.Font.GothamBold,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = parentTable.main
 	})
 	
-	local closeHolder = library:Create("Frame", {
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(-1, 0, 1, 0),
-		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+	local closeHolder = library:Create("TextButton", {
+		Position = UDim2.new(1, -32, 0, 0),
+		Size = UDim2.fromOffset(32, size),
 		BackgroundTransparency = 1,
-		Parent = title
+		Text = "",
+		AutoButtonColor = false,
+		Parent = parentTable.main
 	})
 	
 	local close = library:Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, -size - 10, 1, -size - 10),
+		Size = UDim2.fromOffset(14, 14),
 		Rotation = parentTable.open and 90 or 180,
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://4918373417",
-		ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30),
+		ImageColor3 = parentTable.open and Color3.fromRGB(120, 120, 120) or Color3.fromRGB(60, 60, 60),
 		ScaleType = Enum.ScaleType.Fit,
 		Parent = closeHolder
 	})
 	
-	parentTable.content = library:Create("Frame", {
+	local contentClass = subHolder and "Frame" or "ScrollingFrame"
+	parentTable.content = library:Create(contentClass, {
 		Position = UDim2.new(0, 0, 0, size),
-		Size = UDim2.new(1, 0, 1, -size),
+		Size = UDim2.new(1, 0, 0, visibleHeight),
 		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		ScrollBarThickness = subHolder and 0 or 3,
+		ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
 		Parent = parentTable.main
 	})
 	
 	local layout = library:Create("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 2),
 		Parent = parentTable.content
 	})
 	
-	layout.Changed:connect(function()
-		parentTable.content.Size = UDim2.new(1, 0, 0, layout.AbsoluteContentSize.Y)
-		parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size)
-	end)
-	
-	if not subHolder then
-		library:Create("UIPadding", {
-			Parent = parentTable.content
-		})
-		
-		title.InputBegan:connect(function(input)
-			if input.UserInputType == ui then
-				dragObject = parentTable.main
-				dragging = true
-				dragStart = input.Position
-				startPos = dragObject.Position
-			elseif input.UserInputType == Enum.UserInputType.Touch then
-				dragObject = parentTable.main
-				dragging = true
-				dragStart = input.Position
-				startPos = dragObject.Position
-			end
-		end)
-		title.InputChanged:connect(function(input)
-			if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-				dragInput = input
-			elseif dragging and input.UserInputType == Enum.UserInputType.Touch then
-				dragInput = input
-			end
-		end)
-			title.InputEnded:connect(function(input)
-			if input.UserInputType == ui then
-				dragging = false
-			elseif input.UserInputType == Enum.UserInputType.Touch then
-				dragging = false
-			end
-		end)
-	end
-	
-	closeHolder.InputBegan:connect(function(input)
-		if input.UserInputType == ui then
-			parentTable.open = not parentTable.open
-			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
-			if subHolder then
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
-			else
-				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
-			end
-			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
-		elseif input.UserInputType == Enum.UserInputType.Touch then
-			parentTable.open = not parentTable.open
-			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
-			if subHolder then
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
-			else
-				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
-			end
-			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
+	local function refreshLayout()
+		local contentHeight = layout.AbsoluteContentSize.Y + 8
+		if subHolder then
+			parentTable.content.Size = UDim2.new(1, 0, 0, contentHeight)
+			parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.fromOffset(windowWidth, contentHeight + size) or UDim2.fromOffset(windowWidth, size)
+		else
+			local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800, 600)
+			local maxH = math.max(240, math.min(560, vp.Y - 56))
+			local bodyH = math.max(1, maxH - size)
+			parentTable.content.Size = UDim2.new(1, 0, 0, bodyH)
+			parentTable.content.CanvasSize = UDim2.fromOffset(0, contentHeight)
+			parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.fromOffset(windowWidth, math.min(contentHeight + size, maxH)) or UDim2.fromOffset(windowWidth, size)
+			local x = math.max(8, math.floor((vp.X - windowWidth) * 0.5))
+			parentTable.main.Position = UDim2.fromOffset(x, 12)
 		end
-	end)
-
-	function parentTable:SetTitle(newTitle)
-		title.Text = tostring(newTitle)
 	end
-	
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshLayout)
+
+	if not subHolder then
+		library:Create("UIPadding", {PaddingLeft=UDim.new(0,6), PaddingRight=UDim.new(0,6), PaddingTop=UDim.new(0,4), PaddingBottom=UDim.new(0,4), Parent=parentTable.content})
+		title.InputBegan:Connect(function(input)
+			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+				dragObject=parentTable.main; dragging=true; dragStart=input.Position; startPos=dragObject.Position
+			end
+		end)
+		title.InputChanged:Connect(function(input)
+			if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then dragInput=input end
+		end)
+		title.InputEnded:Connect(function(input)
+			if input.UserInputType==ui or input.UserInputType==Enum.UserInputType.Touch then dragging=false end
+		end)
+	end
+	local function toggleHolder()
+		parentTable.open=not parentTable.open
+		tweenService:Create(close,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Rotation=parentTable.open and 90 or 180,ImageColor3=parentTable.open and Color3.fromRGB(120,120,120) or Color3.fromRGB(60,60,60)}):Play()
+		if round then tweenService:Create(round,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{ImageColor3=parentTable.open and Color3.fromRGB(10,10,10) or Color3.fromRGB(6,6,6)}):Play() end
+		refreshLayout()
+	end
+	closeHolder.InputBegan:Connect(function(input) if input.UserInputType==ui or input.UserInputType==Enum.UserInputType.Touch then toggleHolder() end end)
+	refreshLayout()
+	function parentTable:SetTitle(newTitle) title.Text=tostring(newTitle); return self end
+	function parentTable:SetVisible(v) if self.main then self.main.Visible=v~=false end; return self end
+	function parentTable:IsVisible() return self.main and self.main.Visible or false end
 	return parentTable
 end
-	
+
 local function createLabel(option, parent)
 	local main = library:Create("TextLabel", {
 		LayoutOrder = option.position,
@@ -1828,14 +1827,6 @@ inputService.InputChanged:connect(function(input)
 	end
 end)
 
-wait(1)
-local VirtualUser=game:service'VirtualUser'
-game:service('Players').LocalPlayer.Idled:connect(function()
-VirtualUser:CaptureController()
-VirtualUser:ClickButton2(Vector2.new())
-end)
-
-
 local EXT = {}
 
 library.Options = library.Options or {}
@@ -1914,6 +1905,8 @@ local function extOptions(parent)
 	return type(parent) == "table" and parent.options or nil
 end
 
+local extFireChanged
+
 local function extDecorateOption(lib, o)
 	if type(o) ~= "table" then return o end
 	if o.__extendedDecorated then return o end
@@ -1926,7 +1919,7 @@ local function extDecorateOption(lib, o)
 		o.__callbackWrapped = true
 		o.callback = function(...)
 			local result = baseCallback(...)
-			extFireChanged(o, ...)
+			if extFireChanged then extFireChanged(o, ...) end
 			return result
 		end
 	end
@@ -1976,7 +1969,7 @@ local function extDecorateOption(lib, o)
 	return o
 end
 
-local function extFireChanged(o, value)
+extFireChanged = function(o, value)
 	if type(o.__changed) == "table" then
 		for _, fn in ipairs(o.__changed) do
 			extCall(fn, value)
@@ -1987,9 +1980,9 @@ end
 local function extSetOptionValue(lib, o, value, ...)
 	if type(o) ~= "table" then return end
 	if o.type == "toggle" and o.SetState then return o:SetState(value == true) end
-	if o.type == "slider" and o.SetValue then return o:SetValue(value) end
-	if o.type == "list" and o.SetValue then return o:SetValue(value) end
-	if o.type == "box" and o.SetValue then return o:SetValue(value, ...) end
+	if o.type == "slider" and o.__baseSetValue then return o.__baseSetValue(o,value) end
+	if o.type == "list" and o.__baseSetValue then return o.__baseSetValue(o,value) end
+	if o.type == "box" and o.__baseSetValue then return o.__baseSetValue(o,value, ...) end
 	if o.type == "bind" and o.SetKey then return o:SetKey(value) end
 	if o.type == "color" and o.SetColor then return o:SetColor(value) end
 	if o.__extendedKind == "progress" and o.Set then return o:Set(value) end
@@ -2043,6 +2036,47 @@ local function extRenderOption(lib, option, parent)
 		option.GetValue=function(self) return self.value end
 		option.Set=function(self,v) self.value=math.clamp(tonumber(v) or self.min,self.min,self.max); lib.flags[self.flag]=self.value; local p=self:GetPercentage()/100; if self._fillGui then self._fillGui.Size=UDim2.new(p,0,1,0) end; if self._valueGui then self._valueGui.Text=tostring(round(self.value,self.rounding or 1)) end; extFireChanged(self,self.value); return self end
 		option:Set(option.value)
+	elseif kind == "image" then
+		local h=math.max(40,tonumber(option.Height or option.height) or 120)
+		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
+		local image=extCreate("ImageLabel",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(15,15,17),BorderSizePixel=0,Image=tostring(option.Image or option.image or ""),ImageTransparency=tonumber(option.Transparency or option.transparency) or 0,ScaleType=option.ScaleType or Enum.ScaleType.Fit,Parent=frame})
+		extLine(image,Color3.fromRGB(60,60,65),1)
+		option._gui=frame; option._media=image
+		function option:SetImage(v) self.Image=v; if self._media then self._media.Image=tostring(v or "") end; return self end
+	elseif kind == "video" then
+		local h=math.max(60,tonumber(option.Height or option.height) or 150)
+		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
+		local video=extCreate("VideoFrame",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Looped=option.Looped~=false,Playing=option.Playing==true,Parent=frame})
+		if video then pcall(function() video.Video=tostring(option.Video or option.video or "") end) end
+		extLine(video,Color3.fromRGB(60,60,65),1)
+		option._gui=frame; option._media=video
+		function option:SetVideo(v) self.Video=v; if self._media then pcall(function() self._media.Video=tostring(v or "") end) end; return self end
+		function option:Play() if self._media then pcall(function() self._media:Play() end) end; return self end
+		function option:Pause() if self._media then pcall(function() self._media:Pause() end) end; return self end
+	elseif kind == "viewport" then
+		local h=math.max(60,tonumber(option.Height or option.height) or 150)
+		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
+		local view=extCreate("ViewportFrame",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Ambient=Color3.fromRGB(180,180,180),LightColor=Color3.fromRGB(255,255,255),Parent=frame})
+		extLine(view,Color3.fromRGB(60,60,65),1)
+		local cam=extCreate("Camera",{Parent=view})
+		if cam then view.CurrentCamera=cam end
+		option._gui=frame; option._media=view; option._camera=cam
+		function option:SetModel(model)
+			if not self._media or not model then return self end
+			for _,child in ipairs(self._media:GetChildren()) do if child:IsA("Model") or child:IsA("BasePart") or child:IsA("Folder") then child:Destroy() end end
+			local clone
+			local okClone, resultClone=pcall(function() return model:Clone() end)
+			if okClone then clone=resultClone end
+			if clone then clone.Parent=self._media end
+			if clone and self._camera then
+				local okBox,cf,size=pcall(function() return clone:GetBoundingBox() end)
+				if okBox and cf and size then
+					local radius=math.max(size.X,size.Y,size.Z)
+					self._camera.CFrame=cf*CFrame.new(0,0,math.max(2,radius*2.2))
+				end
+			end
+			return self
+		end
 	elseif kind == "console" then
 		local frame = extCreate("Frame", {LayoutOrder=option.position, Size=UDim2.new(1,0,0,tonumber(option.height) or 88), BackgroundColor3=Color3.fromRGB(15,15,17), BorderSizePixel=0, Parent=parent.content})
 		extLine(frame,Color3.fromRGB(60,60,65),1)
@@ -2149,6 +2183,7 @@ local function decorateParent(lib, parent)
 		o.AddColorPicker=function(self,a,b) local x=self.__parent:AddColor(a,b); return x end
 		o.AddKeyPicker=function(self,a,b) local x=self.__parent:AddBind(a,b); return x end
 		o.AddButton=function(self,a,b) local x=self.__parent:AddButton(a,b); return x end
+		o.__baseSetValue=o.SetValue
 		o.SetValue=function(self,v,...) return extSetOptionValue(lib,self,v,...) end
 		return o
 	end
@@ -2214,6 +2249,19 @@ local function decorateParent(lib, parent)
 	function parent:AddConsole(a,b)
 		local o=extNormalize(a,b); o.__extendedKind="console"; o.type="label"; o.height=tonumber(o.Height or o.height) or 88; o.position=#self.options; o.flag=o.Flag or o.Text; table.insert(self.options,o); extDecorateOption(lib,o); o.Append=function(self,text) if not self._console then self.__pending=self.__pending or {}; table.insert(self.__pending,tostring(text)); return self end; local g=extCreate("TextLabel",{Size=UDim2.new(1,-4,0,16),BackgroundTransparency=1,Text=tostring(text),TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextXAlignment=Enum.TextXAlignment.Left,Parent=self._console}); return g end; o.Clear=function(self) if self._console then for _,c in ipairs(self._console:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end end; return self end; return o
 	end
+	function parent:AddImage(a,b)
+		local o=extNormalize(a,b); o.__extendedKind="image"; o.type="label"; o.position=#self.options; o.Image=o.Image or o.image or o.Value or ""; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	end
+	function parent:AddVideo(a,b)
+		local o=extNormalize(a,b); o.__extendedKind="video"; o.type="label"; o.position=#self.options; o.Video=o.Video or o.video or o.Value or ""; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	end
+	function parent:AddViewport(a,b)
+		local o=extNormalize(a,b); o.__extendedKind="viewport"; o.type="label"; o.position=#self.options; o.Model=o.Model or o.model; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	end
+	parent.CreateImage=parent.AddImage
+	parent.CreateVideo=parent.AddVideo
+	parent.CreateViewport=parent.AddViewport
+
 	parent.AddParagraph=parent.AddParagraph
 	parent.AddSeparator=parent.AddDivider
 	parent.AddDividerLine=parent.AddDivider
@@ -2273,24 +2321,46 @@ end
 library.SetToggleKey=library.SetKeybind
 
 function library:Notify(a,b,c)
-	if not self.base then return nil end
-	local title,text,duration
-	if type(a)=="table" then title=a.Title or a.title or "Notification"; text=a.Description or a.Content or a.Text or a.text or ""; duration=a.Time or a.Duration or 4 else title=a or "Notification"; text=b or ""; duration=c or 4 end
+	if not self.base then
+		self._pendingNotifications=self._pendingNotifications or {}
+		table.insert(self._pendingNotifications,{a,b,c})
+		return nil
+	end
+	local info=type(a)=="table" and a or {Title=a,Description=b,Duration=c}
+	local title=tostring(info.Title or info.title or "Notification")
+	local text=tostring(info.Description or info.Content or info.Text or info.text or "")
+	local duration=tonumber(info.Duration or info.Time or info.time) or 3
+	local side=tostring(info.Side or self.NotifySide or "Right")
 	self._notifications=self._notifications or {}
-	local n=extCreate("Frame",{Size=UDim2.fromOffset(220,50),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,ZIndex=900,Parent=self.base})
-	local stack=#self._notifications
-	n.Position=UDim2.new(0,8,1,-60-(stack*56))
-	extLine(n,Color3.fromRGB(60,60,60),1)
-	extCreate("TextLabel",{Size=UDim2.new(1,-12,0,18),Position=UDim2.fromOffset(6,4),BackgroundTransparency=1,Text=tostring(title),TextColor3=extTheme.Text,TextSize=12,Font=Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,Parent=n})
-	extCreate("TextLabel",{Size=UDim2.new(1,-12,0,22),Position=UDim2.fromOffset(6,22),BackgroundTransparency=1,Text=tostring(text),TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,Parent=n})
+	local camera=workspace.CurrentCamera
+	local vp=camera and camera.ViewportSize or Vector2.new(800,600)
+	local width=math.min(250,math.max(190,vp.X-16))
+	local height=text=="" and 44 or 62
+	local n=extCreate("Frame",{Size=UDim2.fromOffset(width,height),AnchorPoint=Vector2.new(1,0),BackgroundColor3=Color3.fromRGB(18,18,20),BorderSizePixel=0,ZIndex=900,Parent=self.base})
+	if not n then return nil end
+	local index=#self._notifications
+	local x=-8
+	local y=12+(index*(height+6))
+	if side:lower()=="left" then n.AnchorPoint=Vector2.new(0,0); x=8 end
+	if side:lower()=="top" or side:lower()=="right" or side:lower()=="left" then n.Position=UDim2.new(side:lower()=="left" and 0 or 1,x,y,0) end
+	extLine(n,Color3.fromRGB(60,60,65),1)
+	extCreate("Frame",{Size=UDim2.new(0,2,1,0),BackgroundColor3=extTheme.Accent,BorderSizePixel=0,ZIndex=901,Parent=n})
+	extCreate("TextLabel",{Size=UDim2.new(1,-18,0,18),Position=UDim2.fromOffset(10,5),BackgroundTransparency=1,Text=title,TextColor3=extTheme.Text,TextSize=12,Font=self.Font or Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,ZIndex=901,Parent=n})
+	extCreate("TextLabel",{Size=UDim2.new(1,-18,0,height-28),Position=UDim2.fromOffset(10,24),BackgroundTransparency=1,Text=text,TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=901,Parent=n})
 	table.insert(self._notifications,n)
-	task.delay(tonumber(duration) or 4,function()
+	task.delay(duration,function()
 		if n and n.Parent then n:Destroy() end
 		for i,v in ipairs(self._notifications) do if v==n then table.remove(self._notifications,i) break end end
-		for i,v in ipairs(self._notifications) do if v.Parent then v.Position=UDim2.new(0,8,1,-60-((i-1)*56)) end end
+		for i,v in ipairs(self._notifications) do
+			if v and v.Parent then
+				local h=v.AbsoluteSize.Y
+				if side:lower()=="left" then v.Position=UDim2.new(0,8,0,12+((i-1)*(h+6))) else v.Position=UDim2.new(1,-8,0,12+((i-1)*(h+6))) end
+			end
+		end
 	end)
 	return n
 end
+
 library.CreateNotification=library.Notify
 library.ShowNotification=library.Notify
 
@@ -2406,7 +2476,31 @@ function library:SetDPIScale(scale)
 end
 
 function library:SetNotifySide(side) self.NotifySide=side; return self end
-function library:SetFont(font) self.Font=font; return self end
+function library:SetFont(font)
+	local resolved=font
+	if type(font)=="string" and Enum.Font[font] then resolved=Enum.Font[font] end
+	if typeof(resolved)~="EnumItem" then return self end
+	self.Font=resolved
+	if self.base then
+		for _,obj in ipairs(self.base:GetDescendants()) do
+			if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then pcall(function() obj.Font=resolved end) end
+		end
+	end
+	return self
+end
+function library:SetTheme(theme) return self:ChangeTheme(theme) end
+function library:Configure(options)
+	if type(options)~="table" then return self end
+	if options.Theme then self:ChangeTheme(options.Theme) end
+	if options.Accent then self:SetAccent(options.Accent) end
+	if options.Font then self:SetFont(options.Font) end
+	if options.NotifySide then self:SetNotifySide(options.NotifySide) end
+	if options.DPIScale then self:SetDPIScale(options.DPIScale) end
+	if options.BackgroundImage then self:SetBackgroundImage(options.BackgroundImage,options.BackgroundTransparency) end
+	if options.ToggleKeybind then self:SetKeybind(options.ToggleKeybind) end
+	return self
+end
+
 function library:SetBackgroundImage(image,transparency)
 	self.BackgroundImage=image
 	if self.base and image then
@@ -2459,7 +2553,9 @@ library.CreateWindow=function(self,title)
 	function w:Destroy() self.open=false; if self.main then self.main:Destroy() end; return self end
 	function w:SetTitle(v) self.title=tostring(v); if self.main and self.main:FindFirstChildOfClass("TextLabel") then self.main:FindFirstChildOfClass("TextLabel").Text=self.title end; return self end
 	function w:SetIcon(v) self.Icon=v; return self end
-	function w:Center() if self.main then self.main.Position=UDim2.new(0.5,-115,0,20) end return self end
+	function w:Center() if self.main then local vp=workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800,600); self.main.Position=UDim2.fromOffset(math.max(8,math.floor((vp.X-self.main.AbsoluteSize.X)*0.5)),12) end return self end
+	function w:SetWidth(v) self.Width=math.clamp(tonumber(v) or 260,220,420); if self.main then self.main.Size=UDim2.fromOffset(self.Width,self.main.AbsoluteSize.Y) end; return self end
+	function w:SetMaxHeight(v) self.MaxHeight=math.max(200,tonumber(v) or 560); return self end
 	function w:GetOptions() local out={}; local function walk(p) for _,o in ipairs(p.options or {}) do table.insert(out,o); if o.type=="folder" then walk(o) end end end; walk(self); return out end
 	function w:Refresh() extRenderAll(self); return self end
 	function w:AddDependency(flag,value) self.__windowDependencies=self.__windowDependencies or {}; table.insert(self.__windowDependencies,{flag=flag,value=value}); return self end
@@ -2497,6 +2593,11 @@ library.Init=function(self)
 	local r=oldInit2(self)
 	extRenderAll(self)
 	extPostInitOptions(self)
+	if self._pendingNotifications then
+		local pending=self._pendingNotifications
+		self._pendingNotifications=nil
+		for _,n in ipairs(pending) do self:Notify(n[1],n[2],n[3]) end
+	end
 	return r
 end
 
