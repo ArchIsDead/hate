@@ -6,6 +6,12 @@ local tweenService = game:GetService"TweenService"
 local textService = game:GetService"TextService"
 local inputService = game:GetService"UserInputService"
 local ui = Enum.UserInputType.MouseButton1
+local blacklistedKeys = {}
+local whitelistedMouseinputs = {
+	Enum.UserInputType.MouseButton1,
+	Enum.UserInputType.MouseButton2,
+	Enum.UserInputType.MouseButton3,
+}
 --Locals
 local dragging, dragInput, dragStart, startPos, dragObject
 
@@ -141,7 +147,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 				dragging = true
 				dragStart = input.Position
 				startPos = dragObject.Position
-			elseif Input.UserInputType == Enum.UserInputType.Touch then
+			elseif input.UserInputType == Enum.UserInputType.Touch then
 				dragObject = parentTable.main
 				dragging = true
 				dragStart = input.Position
@@ -158,7 +164,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			title.InputEnded:connect(function(input)
 			if input.UserInputType == ui then
 				dragging = false
-			elseif Input.UserInputType == Enum.UserInputType.Touch then
+			elseif input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
 			end
 		end)
@@ -174,7 +180,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
 			end
 			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			parentTable.open = not parentTable.open
 			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
 			if subHolder then
@@ -272,7 +278,7 @@ function createToggle(option, parent)
 	main.InputBegan:connect(function(input)
 		if input.UserInputType == ui then
 			option:SetState(not option.state)
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			option:SetState(not option.state)
 		end
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -354,7 +360,7 @@ function createButton(option, parent)
 			clicking = true
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			option.callback()
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			library.flags[option.flag] = true
 			clicking = true
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
@@ -374,7 +380,7 @@ function createButton(option, parent)
 			else
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
 			end
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			clicking = false
 			if inContact then
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
@@ -447,7 +453,7 @@ local function createBind(option, parent)
 			binding = true
 			bindinput.Text = "..."
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			binding = true
 			bindinput.Text = "..."
 			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
@@ -615,7 +621,7 @@ local function createSlider(option, parent)
 			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			sliding = true
 			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
 			sliding = true
@@ -646,7 +652,7 @@ local function createSlider(option, parent)
 				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 			end
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			sliding = false
 			if inContact then
 				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
@@ -804,7 +810,7 @@ local function createList(option, parent, holder)
 					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
 				end
 			end
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			if library.activePopup then
 				library.activePopup:Close()
 			end
@@ -862,7 +868,7 @@ local function createList(option, parent, holder)
 				clicking = true
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
 				self:SetValue(value)
-			elseif Input.UserInputType == Enum.UserInputType.Touch then
+			elseif input.UserInputType == Enum.UserInputType.Touch then
 				clicking = true
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
 				self:SetValue(value)
@@ -879,7 +885,7 @@ local function createList(option, parent, holder)
 			if input.UserInputType == ui then
 				clicking = false
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
-			elseif Input.UserInputType == Enum.UserInputType.Touch then
+			elseif input.UserInputType == Enum.UserInputType.Touch then
 				clicking = false
 				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
 			end
@@ -1005,7 +1011,7 @@ local function createBox(option, parent)
 	main.InputBegan:connect(function(input)
 		if input.UserInputType == ui then
 			if not focused then inputvalue:CaptureFocus() end
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			if not focused then inputvalue:CaptureFocus() end
 		end
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -1496,7 +1502,7 @@ local function createColor(option, parent, holder)
 					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
 				end
 			end
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+		elseif input.UserInputType == Enum.UserInputType.Touch then
 			if not option.mainHolder then createColorPickerWindow(option) end
 			if library.activePopup then
 				library.activePopup:Close()
@@ -1741,17 +1747,22 @@ end
 local UIToggle
 function library:Init()
 	self.base = self.base or self:Create("ScreenGui")
-	if syn and syn.protect_gui then
-		syn.protect_gui(self.base)
-	elseif get_hidden_gui then
-		get_hidden_gui(self.base)
-	elseif gethui then
-		gethui(self.base)
-	else
-		game:GetService"Players".LocalPlayer:Kick("Error: protect_gui function not found")
-		return
+	local protected = false
+	pcall(function()
+		if syn and type(syn.protect_gui) == "function" then
+			syn.protect_gui(self.base)
+			protected = true
+		elseif type(get_hidden_gui) == "function" then
+			get_hidden_gui(self.base)
+			protected = true
+		elseif type(gethui) == "function" then
+			gethui(self.base)
+			protected = true
+		end
+	end)
+	if not protected then
+		self.base.Parent = game:GetService"CoreGui"
 	end
-	self.base.Parent = game:GetService"CoreGui"
 	self.base.ResetOnSpawn = true
 	self.base.Name = "ToraScript"
 	
@@ -1791,7 +1802,7 @@ inputService.InputBegan:connect(function(input)
 				library.activePopup:Close()
 			end
 		end
-	elseif Input.UserInputType == Enum.UserInputType.Touch then
+	elseif input.UserInputType == Enum.UserInputType.Touch then
 		if library.activePopup then
 			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
 				library.activePopup:Close()
@@ -2436,16 +2447,16 @@ library.CreateWindow=function(self,title)
 	local w=oldCreateWindow2(self,type(title)=="table" and (title.Title or title.Name or "Window") or title)
 	decorateParent(self,w)
 	if type(title)=="table" then w.Footer=title.Footer; w.NotifySide=title.NotifySide; w.Icon=title.Icon; w.AutoShow=title.AutoShow~=false; w.ToggleKeybind=title.ToggleKeybind or title.ToggleKey end
-	function w:Toggle() self.open=not self.open; if self.main then self.main.Visible=self.open end; return self end end
-	function w:Minimize() self.open=false; if self.main then self.main.Visible=false end; return self end end
-	function w:Show() self.open=true; if self.main then self.main.Visible=true end; return self end end
-	function w:Destroy() self.open=false; if self.main then self.main:Destroy() end; return self end end
-	function w:SetTitle(v) self.title=tostring(v); if self.main and self.main:FindFirstChildOfClass("TextLabel") then self.main:FindFirstChildOfClass("TextLabel").Text=self.title end; return self end end
+	function w:Toggle() self.open=not self.open; if self.main then self.main.Visible=self.open end; return self end
+	function w:Minimize() self.open=false; if self.main then self.main.Visible=false end; return self end
+	function w:Show() self.open=true; if self.main then self.main.Visible=true end; return self end
+	function w:Destroy() self.open=false; if self.main then self.main:Destroy() end; return self end
+	function w:SetTitle(v) self.title=tostring(v); if self.main and self.main:FindFirstChildOfClass("TextLabel") then self.main:FindFirstChildOfClass("TextLabel").Text=self.title end; return self end
 	function w:SetIcon(v) self.Icon=v; return self end
-	function w:Center() if self.main then self.main.Position=UDim2.new(0.5,-115,0,20) end return self end end
+	function w:Center() if self.main then self.main.Position=UDim2.new(0.5,-115,0,20) end return self end
 	function w:GetOptions() local out={}; local function walk(p) for _,o in ipairs(p.options or {}) do table.insert(out,o); if o.type=="folder" then walk(o) end end end; walk(self); return out end
-	function w:Refresh() extRenderAll(self); return self end end
-	function w:AddDependency(flag,value) self.__windowDependencies=self.__windowDependencies or {}; table.insert(self.__windowDependencies,{flag=flag,value=value}); return self end end
+	function w:Refresh() extRenderAll(self); return self end
+	function w:AddDependency(flag,value) self.__windowDependencies=self.__windowDependencies or {}; table.insert(self.__windowDependencies,{flag=flag,value=value}); return self end
 	function w:AddTab(name) local n=type(name)=="table" and (name.Name or name.Text or name.Title) or name; local tab=self:AddFolder(n or "Tab"); tab.Name=n; return tab end
 	w.CreateTab=w.AddTab
 	function w:AddKeyTab(name) return self:AddTab(name or "Key System") end
@@ -2464,7 +2475,7 @@ function library:AddDialog(window,a,b)
 	extCreate("TextLabel",{Size=UDim2.new(1,-16,0,48),Position=UDim2.fromOffset(8,28),BackgroundTransparency=1,Text=tostring(info.Description or info.Text or ""),TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=951,Parent=f})
 	local obj={Frame=f,Buttons={}}
 	function obj:Dismiss() if self.Frame then self.Frame:Destroy() end end
-	function obj:SetTitle(v) local x=self.Frame and self.Frame:FindFirstChildOfClass("TextLabel"); if x then x.Text=tostring(v) end; return self end end
+	function obj:SetTitle(v) local x=self.Frame and self.Frame:FindFirstChildOfClass("TextLabel"); if x then x.Text=tostring(v) end; return self end
 	function obj:AddFooterButton(k,button) local bi=type(button)=="table" and button or {Text=tostring(button or k)}; local bt=extCreate("TextButton",{Size=UDim2.fromOffset(64,22),Position=UDim2.fromOffset(8+(#self.Buttons*70),88),BackgroundColor3=Color3.fromRGB(30,30,30),Text=tostring(bi.Text or k),TextColor3=extTheme.Text,TextSize=11,Font=Enum.Font.Code,AutoButtonColor=false,Parent=self.Frame}); self.Buttons[k]=bt; bt.Activated:Connect(function() extCall(bi.Func or bi.Callback,self) end); return self end
 	return obj
 end
