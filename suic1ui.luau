@@ -1747,23 +1747,29 @@ end
 local UIToggle
 function library:Init()
 	self.base = self.base or self:Create("ScreenGui")
-	local protected = false
+	local parentTarget
 	pcall(function()
 		if syn and type(syn.protect_gui) == "function" then
 			syn.protect_gui(self.base)
-			protected = true
-		elseif type(get_hidden_gui) == "function" then
-			get_hidden_gui(self.base)
-			protected = true
+			parentTarget = game:GetService("CoreGui")
 		elseif type(gethui) == "function" then
-			gethui(self.base)
-			protected = true
+			local ok, hidden = pcall(gethui)
+			if ok and typeof(hidden) == "Instance" then
+				parentTarget = hidden
+			end
+		elseif type(get_hidden_gui) == "function" then
+			local ok, hidden = pcall(get_hidden_gui)
+			if ok and typeof(hidden) == "Instance" then
+				parentTarget = hidden
+			end
 		end
 	end)
-	if not protected then
-		self.base.Parent = game:GetService"CoreGui"
+	if not parentTarget then
+		parentTarget = game:GetService("CoreGui")
 	end
-	self.base.ResetOnSpawn = true
+	self.base.Parent = parentTarget
+	self.base.ResetOnSpawn = false
+	self.base.Enabled = true
 	self.base.Name = "ToraScript"
 	
 	
