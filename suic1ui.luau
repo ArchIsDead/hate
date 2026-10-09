@@ -1736,7 +1736,7 @@ local function getFnctions(parent)
 	
 	function parent:AddImage(option)
 		option = typeof(option) == "table" and option or {}
-		option.text = tostring(option.text or option.Text or "Image")
+		option.text = tostring(option.text or option.Text or "")
 		local image = option.Image or option.image or option.value or option.Value or option.Default or ""
 		if typeof(image) == "number" then image = "rbxassetid://" .. tostring(image) end
 		option.Image = tostring(image)
@@ -1749,8 +1749,8 @@ local function getFnctions(parent)
 			self.Image = tostring(value or "")
 			if self._media then self._media.Image = self.Image end
 			if self._placeholderGui then
-				self._placeholderGui.Visible = self.Image == "" or not (self._media and self._media.IsLoaded)
-				self._placeholderGui.Text = self.Image == "" and "IMAGE PREVIEW" or "LOADING IMAGE..."
+				self._placeholderGui.Visible = self.Image ~= "" and not (self._media and self._media.IsLoaded)
+				self._placeholderGui.Text = self.Image == "" and "" or ""
 			end
 			return self
 		end
@@ -1760,7 +1760,7 @@ local function getFnctions(parent)
 
 	function parent:AddViewport(option)
 		option = typeof(option) == "table" and option or {}
-		option.text = tostring(option.text or option.Text or "Viewport")
+		option.text = tostring(option.text or option.Text or "")
 		option.Model = option.Model or option.model
 		option.type = "label"
 		option.__extendedKind = "viewport"
@@ -2109,9 +2109,10 @@ local function extRenderOption(lib, option, parent)
 	elseif kind == "image" then
 		local h = math.max(76, tonumber(option.Height or option.height) or 128)
 		local frame = extCreate("Frame", {LayoutOrder = option.position, Size = UDim2.new(1, 0, 0, h), BackgroundTransparency = 1, Parent = parent.content})
-		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = tostring(option.text or option.Text or "Image"), TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
+		local imageTitle = tostring(option.text or option.Text or "")
+		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = imageTitle, Visible = imageTitle ~= "", TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
 		local image = extCreate("ImageLabel", {Size = UDim2.new(1, -12, 1, -26), Position = UDim2.fromOffset(6, 22), BackgroundColor3 = Color3.fromRGB(15, 15, 17), BorderSizePixel = 0, Image = "", ImageTransparency = tonumber(option.Transparency or option.transparency) or 0, ScaleType = option.ScaleType or Enum.ScaleType.Fit, Parent = frame})
-		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -16, 1, -8), Position = UDim2.fromOffset(8, 4), BackgroundTransparency = 1, Text = "IMAGE PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = image})
+		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -16, 1, -8), Position = UDim2.fromOffset(8, 4), BackgroundTransparency = 1, Text = "", Visible = false, TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = image})
 		extLine(image, Color3.fromRGB(60, 60, 65), 1)
 		option._gui = frame
 		option._titleGui = titleLabel
@@ -2128,8 +2129,8 @@ local function extRenderOption(lib, option, parent)
 			self.Image = tostring(v or "")
 			if self._media then self._media.Image = self.Image end
 			if self._placeholderGui then
-				self._placeholderGui.Visible = self.Image == "" or not (self._media and self._media.IsLoaded)
-				self._placeholderGui.Text = self.Image == "" and "IMAGE PREVIEW" or "LOADING IMAGE..."
+				self._placeholderGui.Visible = self.Image ~= "" and not (self._media and self._media.IsLoaded)
+				self._placeholderGui.Text = self.Image == "" and "" or ""
 			end
 			return self
 		end
@@ -2139,13 +2140,14 @@ local function extRenderOption(lib, option, parent)
 	elseif kind == "viewport" then
 		local h = math.max(76, tonumber(option.Height or option.height) or 150)
 		local frame = extCreate("Frame", {LayoutOrder = option.position, Size = UDim2.new(1, 0, 0, h), BackgroundTransparency = 1, Parent = parent.content})
-		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = tostring(option.text or option.Text or "Viewport"), TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
+		local viewportTitle = tostring(option.text or option.Text or "")
+		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = viewportTitle, Visible = viewportTitle ~= "", TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
 		local view = extCreate("ViewportFrame", {Size = UDim2.new(1, -12, 1, -26), Position = UDim2.fromOffset(6, 22), BackgroundColor3 = Color3.fromRGB(15, 15, 17), BorderSizePixel = 0, Ambient = Color3.fromRGB(180, 180, 180), LightColor = Color3.fromRGB(255, 255, 255), Parent = frame})
 		extLine(view, Color3.fromRGB(60, 60, 65), 1)
 		local cam = extCreate("Camera", {FieldOfView = 35, Parent = view})
 		if cam then view.CurrentCamera = cam end
 		local world = extCreate("WorldModel", {Parent = view})
-		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -24, 1, -30), Position = UDim2.fromOffset(12, 26), BackgroundTransparency = 1, Text = "SETMODEL(instance) TO PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = view})
+		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -24, 1, -30), Position = UDim2.fromOffset(12, 26), BackgroundTransparency = 1, Text = "", Visible = false, TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = view})
 		option._gui = frame
 		option._titleGui = titleLabel
 		option._media = view
@@ -2156,16 +2158,16 @@ local function extRenderOption(lib, option, parent)
 			if not self._world then return self end
 			for _, child in ipairs(self._world:GetChildren()) do child:Destroy() end
 			if not model then
-				if self._placeholderGui then self._placeholderGui.Visible = true end
+				if self._placeholderGui then self._placeholderGui.Visible = false; self._placeholderGui.Text = "" end
 				return self
 			end
 			if typeof(model) ~= "Instance" or not (model:IsA("Model") or model:IsA("BasePart")) then
-				if self._placeholderGui then self._placeholderGui.Visible = true; self._placeholderGui.Text = "SetModel expects a Model or BasePart" end
+				if self._placeholderGui then self._placeholderGui.Visible = false; self._placeholderGui.Text = "" end
 				return self
 			end
 			local okClone, clone = pcall(function() return model:Clone() end)
 			if not okClone or not clone then
-				if self._placeholderGui then self._placeholderGui.Visible = true; self._placeholderGui.Text = "Model could not be cloned" end
+				if self._placeholderGui then self._placeholderGui.Visible = false; self._placeholderGui.Text = "" end
 				return self
 			end
 			clone.Parent = self._world
@@ -2520,8 +2522,15 @@ function library:SafeCallback(fn,...)
 	return extCall(fn,...)
 end
 
+function library:SetConfigFolder(path)
+	path = tostring(path or "suic1UI"):gsub("[\\/]+$", "")
+	if path == "" then path = "suic1UI" end
+	self.ConfigFolder = path
+	return self
+end
+
 function library:InitConfigStore()
-	self.ConfigFolder="suic1UI"
+	self.ConfigFolder=self.ConfigFolder or "suic1UI"
 	if type(makefolder)=="function" and type(isfolder)=="function" then pcall(function() if not isfolder(self.ConfigFolder) then makefolder(self.ConfigFolder) end end) end
 	return self
 end
@@ -2767,103 +2776,116 @@ function library:UpdateDependencies()
 	return self
 end
 
+
+function library:SetFolderVisible(folder, visible)
+	if type(folder) ~= "table" then return false end
+	for _, option in ipairs(folder.options or {}) do
+		option._hidden = not visible
+		if option._gui then option._gui.Visible = visible end
+		if option.type == "folder" then self:SetFolderVisible(option, visible) end
+	end
+	return self
+end
+
+function library:HideElement(option, hidden)
+	if type(option) ~= "table" then return false end
+	option._hidden = hidden ~= false
+	if option._gui then option._gui.Visible = not option._hidden end
+	return self
+end
+
+function library:DeleteElement(parent, option)
+	if type(parent) ~= "table" or type(option) ~= "table" then return false end
+	for i, item in ipairs(parent.options or {}) do
+		if item == option then
+			table.remove(parent.options, i)
+			if option._gui then option._gui:Destroy() end
+			if option.flag then self.flags[option.flag] = nil end
+			return true
+		end
+	end
+	return false
+end
+
 function library:RunExample()
 	if self.Unloaded then return nil end
-
 	local window = self:CreateWindow("suic1.de | RunExample")
 	local main = window:AddFolder("Main Elements")
-	local controls = window:AddFolder("Advanced Controls")
-	local media = window:AddFolder("Media Preview")
-	local appearance = window:AddFolder("Appearance")
+	local advanced = window:AddFolder("Advanced Elements")
+	local media = window:AddFolder("Media")
 	local configuration = window:AddFolder("Configuration")
+	local management = window:AddFolder("Element Management")
 	local diagnostics = window:AddFolder("Diagnostics")
 
-	main:AddLabel({text = "Tora-style controls and extended elements"})
-	main:AddToggle({text = "Toggle", flag = "ExampleToggle", state = true, callback = function(value) self:Notify("Toggle", tostring(value), 2) end})
-	main:AddButton({text = "Button", flag = "ExampleButton", callback = function() self:Notify("Button", "Button callback fired", 2) end})
-	main:AddSlider({text = "Slider", flag = "ExampleSlider", min = 0, max = 100, value = 50, float = 1, callback = function(value) self.flags.ExampleSlider = value end})
-	main:AddList({text = "Dropdown", flag = "ExampleDropdown", values = {"Red", "Green", "Blue"}, value = "Red", callback = function(value) self.flags.ExampleDropdown = value end})
-	main:AddBox({text = "Input", flag = "ExampleInput", value = "Hello", callback = function(value) self.flags.ExampleInput = value end})
-	main:AddBind({text = "Keybind", flag = "ExampleKeybind", key = "X", hold = false, callback = function() self:Notify("Keybind", "Keybind activated", 2) end})
-	main:AddColor({text = "Color Picker", flag = "ExampleColor", color = Color3.fromRGB(255, 65, 65), callback = function(value) self.flags.ExampleColor = value end})
+	main:AddLabel({text = "Core controls"})
+	main:AddToggle({text = "Toggle", flag = "ExampleToggle", state = false, callback = function(v) self:Notify("Toggle", tostring(v), 2) end})
+	main:AddButton({text = "Button", callback = function() self:Notify("Button", "Callback fired", 2) end})
+	main:AddSlider({text = "Slider", flag = "ExampleSlider", min = 0, max = 100, value = 50, float = 1, callback = function(v) self.flags.ExampleSlider = v end})
+	main:AddList({text = "Dropdown", flag = "ExampleDropdown", values = {"Red", "Green", "Blue"}, value = "Red", callback = function(v) self.flags.ExampleDropdown = v end})
+	main:AddBox({text = "Input", flag = "ExampleInput", value = "Type here", callback = function(v) self.flags.ExampleInput = v end})
+	main:AddBind({text = "Keybind", flag = "ExampleKeybind", key = "X", hold = false, callback = function() self:Notify("Keybind", "Activated", 2) end})
+	local colorOption = main:AddColor({text = "Color Picker", flag = "ExampleColor", color = Color3.fromRGB(255, 65, 65), callback = function(v) self.flags.ExampleColor = v end})
 
-	controls:AddParagraph({Title = "Paragraph", Description = "Extended elements rendered in the same library window."})
-	controls:AddDivider()
-	controls:AddText({Text = "Text element"})
-	controls:AddCheckbox({text = "Checkbox", flag = "ExampleCheckbox", state = false, callback = function(value) self.flags.ExampleCheckbox = value end})
-	controls:AddDropdown({text = "Alias Dropdown", flag = "ExampleAliasDropdown", values = {"Option A", "Option B", "Option C"}, value = "Option A", callback = function(value) self.flags.ExampleAliasDropdown = value end})
-	controls:AddInput({text = "Alias Input", flag = "ExampleAliasInput", value = "Editable text", callback = function(value) self.flags.ExampleAliasInput = value end})
-	controls:AddKeybind({text = "Alias Keybind", flag = "ExampleAliasKeybind", key = "Z", callback = function() self:Notify("Alias Keybind", "Activated", 2) end})
-	controls:AddColorPicker({text = "Alias Color Picker", flag = "ExampleAliasColor", color = Color3.fromRGB(80, 200, 100), callback = function(value) self.flags.ExampleAliasColor = value end})
-	controls:AddStat({Text = "Example Stat", Flag = "ExampleStat", Default = 42})
-	controls:AddProgress({Text = "Example Progress", Flag = "ExampleProgress", Min = 0, Max = 100, Default = 65})
-	local console = controls:AddConsole({Text = "Example Console", Height = 88})
-	console:Append("RunExample initialized")
-	console:Append("Console append is working")
-	local nested = controls:AddFolder("Nested Folder")
+	advanced:AddParagraph({Title = "Paragraph", Description = "Long descriptions wrap inside the available width instead of running outside the window."})
+	advanced:AddDivider()
+	advanced:AddText({Text = "Wrapped text label example with a longer description that should wrap across multiple lines."})
+	advanced:AddCheckbox({text = "Checkbox", flag = "ExampleCheckbox", state = false, callback = function(v) self.flags.ExampleCheckbox = v end})
+	advanced:AddDropdown({text = "Compatibility Dropdown", flag = "ExampleAliasDropdown", values = {"Option A", "Option B", "Option C"}, value = "Option A", callback = function(v) self.flags.ExampleAliasDropdown = v end})
+	advanced:AddInput({text = "Compatibility Input", flag = "ExampleAliasInput", value = "Editable", callback = function(v) self.flags.ExampleAliasInput = v end})
+	advanced:AddKeybind({text = "Compatibility Keybind", flag = "ExampleAliasKeybind", key = "Z", callback = function() self:Notify("Keybind", "Compatibility keybind activated", 2) end})
+	advanced:AddColorPicker({text = "Compatibility Color", flag = "ExampleAliasColor", color = Color3.fromRGB(80, 200, 100), callback = function(v) self.flags.ExampleAliasColor = v end})
+	advanced:AddStat({Text = "Example Stat", Flag = "ExampleStat", Default = 42})
+	local nested = advanced:AddFolder("Nested Folder")
 	nested:AddLabel({text = "Nested folder content"})
 	nested:AddToggle({text = "Nested Toggle", flag = "ExampleNestedToggle", state = false})
 
-	local image = media:AddImage({text = "Image Preview", Image = "", Height = 120})
-	local viewport = media:AddViewport({text = "Viewport Preview", Height = 140})
-	local imageIdInput = media:AddBox({text = "Image Asset ID", value = "", callback = function(value)
+	local image = media:AddImage({text = "", Image = "", Height = 128})
+	local viewport = media:AddViewport({text = "", Height = 150})
+	media:AddBox({text = "Image Asset ID", value = "", callback = function(value)
 		local assetId = tostring(value or ""):match("%d+")
 		if assetId and image and image.SetImage then image:SetImage(assetId) end
 	end})
+	media:AddLabel({text = "Paste a valid Roblox image asset ID to update the preview."})
 	local previewModel = Instance.new("Model")
 	previewModel.Name = "RunExamplePreviewModel"
-	local previewPart = Instance.new("Part")
-	previewPart.Name = "PreviewPart"
-	previewPart.Size = Vector3.new(3, 3, 3)
-	previewPart.Anchored = true
-	previewPart.Color = Color3.fromRGB(255, 65, 65)
-	previewPart.Material = Enum.Material.SmoothPlastic
-	previewPart.Parent = previewModel
-	previewModel.PrimaryPart = previewPart
+	local part = Instance.new("Part")
+	part.Name = "PreviewPart"
+	part.Size = Vector3.new(3, 3, 3)
+	part.Anchored = true
+	part.Color = Color3.fromRGB(255, 65, 65)
+	part.Parent = previewModel
+	previewModel.PrimaryPart = part
 	if viewport and viewport.SetModel then viewport:SetModel(previewModel) end
-	media:AddButton({text = "Refresh Viewport Preview", callback = function()
-		if viewport and viewport.SetModel then viewport:SetModel(previewModel) end
-	end})
-	media:AddLabel({text = "Enter an accessible Roblox image asset ID above to update the image preview live."})
+	media:AddButton({text = "Set Viewport Model", callback = function() if viewport and viewport.SetModel then viewport:SetModel(previewModel) end end})
 
-	appearance:AddLabel({text = "Theme and appearance helpers"})
-	appearance:AddColor({text = "Accent Color", flag = "ExampleAccent", color = extTheme.Accent, callback = function(value) self:SetAccent(value) end})
-	appearance:AddButton({text = "Reset Accent", callback = function() self:SetAccent(Color3.fromRGB(255, 65, 65)) end})
+	configuration:AddBox({text = "Config Folder", value = self.ConfigFolder or "suic1UI", callback = function(path) self:SetConfigFolder(path) end})
+	configuration:AddBox({text = "Config Name", value = "default", callback = function(value) self._exampleConfigName = tostring(value ~= "" and value or "default") end})
+	configuration:AddButton({text = "Save Config", callback = function() self:SaveConfig(self._exampleConfigName or "default"); self:Notify("Config", "Save requested", 2) end})
+	configuration:AddButton({text = "Load Config", callback = function() local ok = self:LoadConfig(self._exampleConfigName or "default"); self:Notify("Config", ok and "Loaded" or "Could not load config", 2) end})
+	configuration:AddButton({text = "List Configs", callback = function() local t = self:ListConfigs(); self:Notify("Configs", #t > 0 and table.concat(t, ", ") or "No configs found", 3) end})
+	configuration:AddButton({text = "Delete Config", callback = function() self:DeleteConfig(self._exampleConfigName or "default"); self:Notify("Config", "Delete requested", 2) end})
 
-	configuration:AddButton({text = "Save Example Config", callback = function() self:SaveConfig("RunExample"); self:Notify("Config", "Save requested", 2) end})
-	configuration:AddButton({text = "Load Example Config", callback = function() self:LoadConfig("RunExample") end})
-	configuration:AddButton({text = "List Configs", callback = function()
-		local configs = self:ListConfigs()
-		if type(configs) == "table" then self:Notify("Configs", #configs > 0 and table.concat(configs, ", ") or "No configs found", 3) else self:Notify("Configs", tostring(configs), 3) end
-	end})
-	configuration:AddButton({text = "Delete Example Config", callback = function() self:DeleteConfig("RunExample") end})
+	management:AddLabel({text = "Use the buttons to hide or remove example elements."})
+	management:AddButton({text = "Hide Color Picker", callback = function() if colorOption and colorOption.SetVisible then colorOption:SetVisible(false) elseif colorOption and colorOption._gui then colorOption._gui.Visible = false end end})
+	management:AddButton({text = "Show Color Picker", callback = function() if colorOption and colorOption.SetVisible then colorOption:SetVisible(true) elseif colorOption and colorOption._gui then colorOption._gui.Visible = true end end})
+	management:AddButton({text = "Delete Color Picker", callback = function() if colorOption and colorOption.Remove then colorOption:Remove() elseif colorOption then if colorOption._gui then colorOption._gui:Destroy() end; for i, item in ipairs(main.options) do if item == colorOption then table.remove(main.options, i); break end end end end})
+	management:AddButton({text = "Show Main Elements", callback = function() self:SetFolderVisible(main, true) end})
+	management:AddButton({text = "Hide Main Elements", callback = function() self:SetFolderVisible(main, false) end})
 
-	diagnostics:AddLabel({text = "Library API diagnostics"})
-	diagnostics:AddButton({text = "Run API Checks", callback = function()
-		local methods = {"Init", "Close", "Notify", "OnFlagChange", "SetFlag", "GetFlag", "Set", "Get", "SetAccent", "SetKeybind", "SetToggleKey", "SaveConfig", "LoadConfig", "DeleteConfig", "ListConfigs", "SetDPIScale", "SetNotifySide", "SetFont", "SetTheme", "SetBackgroundImage", "GetTextBounds", "GetKeyString", "GetBetterColor", "GetLighterColor", "GetDarkerColor", "MouseIsOverFrame", "IsInsideFrame", "AddToRegistry", "RemoveFromRegistry", "UpdateColorsUsingRegistry", "MakeLine", "AddBlank", "AddOutline", "GetIcon", "GetCustomIcon", "SetIconModule", "SetCustomIcon", "MakeDraggable", "Validate", "AddDialog", "CreateLoading", "Unload", "RunExample"}
-		local available, missing = 0, {}
-		for _, name in ipairs(methods) do if type(self[name]) == "function" then available += 1 else table.insert(missing, name) end end
-		console:Append("API methods available: " .. tostring(available) .. "/" .. tostring(#methods))
-		if #missing > 0 then console:Append("Missing: " .. table.concat(missing, ", ")) end
-		self:Notify("API Checks", tostring(available) .. "/" .. tostring(#methods) .. " methods found", 3)
+	diagnostics:AddButton({text = "Check Library Methods", callback = function()
+		local names = {"Init", "Close", "Notify", "OnFlagChange", "SetFlag", "GetFlag", "SetAccent", "SetKeybind", "SaveConfig", "LoadConfig", "DeleteConfig", "ListConfigs", "SetConfigFolder", "SetDPIScale", "SetNotifySide", "SetFont", "AddDialog", "CreateLoading", "Unload", "RunExample"}
+		local count = 0
+		for _, name in ipairs(names) do if type(self[name]) == "function" then count += 1 end end
+		self:Notify("API Check", tostring(count) .. "/" .. tostring(#names) .. " methods available", 3)
 	end})
-	diagnostics:AddButton({text = "Test Flag Events", callback = function()
-		self:OnFlagChange("ExampleToggle", function(value) console:Append("ExampleToggle changed: " .. tostring(value)) end)
-		self:SetFlag("ExampleToggle", not self:GetFlag("ExampleToggle"))
-	end})
-	diagnostics:AddButton({text = "Test Dialog", callback = function()
-		local dialog = self:AddDialog(window, {Title = "Dialog Test", Description = "Dialog creation and footer buttons are available."})
-		if dialog then dialog:AddFooterButton("ok", {Text = "OK", Callback = function() dialog:Dismiss() end}) end
-	end})
-	diagnostics:AddButton({text = "Test Loading Panel", callback = function() self:CreateLoading("Loading Test", "RunExample loading helper") end})
+	diagnostics:AddButton({text = "Test Flag Event", callback = function() self:OnFlagChange("ExampleToggle", function(v) self:Notify("Flag Changed", tostring(v), 2) end); self:SetFlag("ExampleToggle", not self:GetFlag("ExampleToggle")) end})
+	diagnostics:AddButton({text = "Test Dialog", callback = function() local dialog = self:AddDialog(window, {Title = "Dialog Test", Description = "Dialog callbacks are available."}); if dialog then dialog:AddFooterButton("ok", {Text = "OK", Callback = function() dialog:Dismiss() end}) end end})
 
 	self:SetAccent(Color3.fromRGB(255, 65, 65))
 	self:SetKeybind(Enum.KeyCode.RightControl)
 	self:SetNotifySide("Right")
-	self:SetDPIScale(1)
-	self:OnFlagChange("ExampleToggle", function(value) self.flags.ExampleToggle = value end)
 	self:Init()
-	self:Notify("RunExample", "All example sections initialized", 3)
+	self:Notify("RunExample", "Example initialized", 3)
 	return window
 end
 
