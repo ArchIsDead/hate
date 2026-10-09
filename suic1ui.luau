@@ -73,11 +73,9 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		Position = UDim2.fromOffset(xPosition, subHolder and 0 or 12),
 		Size = UDim2.fromOffset(windowWidth, size),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
+		Image = "",
 		ImageColor3 = Color3.fromRGB(20, 20, 20),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.04,
+		ScaleType = Enum.ScaleType.Stretch,
 		ClipsDescendants = true,
 		Parent = parent
 	})
@@ -87,11 +85,9 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		round = library:Create("ImageLabel", {
 			Size = UDim2.new(1, 0, 0, size),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://3570695787",
+			Image = "",
 			ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6),
-			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = Rect.new(100, 100, 100, 100),
-			SliceScale = 0.04,
+			ScaleType = Enum.ScaleType.Stretch,
 			Parent = parentTable.main
 		})
 	end
@@ -107,6 +103,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		Font = library.Font or Enum.Font.GothamBold,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = parentTable.main
 	})
@@ -164,8 +161,6 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			parentTable.content.Size = UDim2.new(1, 0, 0, bodyH)
 			parentTable.content.CanvasSize = UDim2.fromOffset(0, contentHeight)
 			parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.fromOffset(windowWidth, math.min(contentHeight + size, maxH)) or UDim2.fromOffset(windowWidth, size)
-			local x = math.max(8, math.floor((vp.X - windowWidth) * 0.5))
-			parentTable.main.Position = UDim2.fromOffset(x, 12)
 		end
 	end
 	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshLayout)
@@ -2065,7 +2060,9 @@ local function extFindGui(parent, option)
 	if not parent or not parent.content then return nil end
 	local wanted = option.position
 	for _, child in ipairs(parent.content:GetChildren()) do
-		if child.LayoutOrder == wanted then return child end
+		if child:IsA("GuiObject") and child.LayoutOrder == wanted then
+			return child
+		end
 	end
 end
 
@@ -2075,9 +2072,13 @@ local function extRenderOption(lib, option, parent)
 	if gui then gui:Destroy() end
 	local kind = option.__extendedKind
 	if kind == "paragraph" then
-		local frame = extCreate("Frame", {LayoutOrder=option.position, Size=UDim2.new(1,0,0,48), BackgroundTransparency=1, Parent=parent.content})
-		extCreate("TextLabel", {Size=UDim2.new(1,-12,0,18), Position=UDim2.fromOffset(6,3), BackgroundTransparency=1, Text=tostring(option.title or option.Text), TextColor3=extTheme.Text, TextSize=14, Font=Enum.Font.GothamBold, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame})
-		extCreate("TextLabel", {Size=UDim2.new(1,-12,0,24), Position=UDim2.fromOffset(6,21), BackgroundTransparency=1, Text=tostring(option.description or ""), TextColor3=extTheme.Dim, TextSize=11, Font=Enum.Font.Code, TextWrapped=true, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame})
+		local bodyText = tostring(option.description or option.Description or option.Content or "")
+		local bodyWidth = math.max(120, (parent.content.AbsoluteSize.X > 0 and parent.content.AbsoluteSize.X or 248) - 18)
+		local bodyBounds = textService:GetTextSize(bodyText, 11, Enum.Font.Code, Vector2.new(bodyWidth, 10000))
+		local bodyHeight = math.max(20, bodyBounds.Y + 4)
+		local frame = extCreate("Frame", {LayoutOrder=option.position, Size=UDim2.new(1,0,0,24 + bodyHeight), BackgroundTransparency=1, Parent=parent.content})
+		extCreate("TextLabel", {Size=UDim2.new(1,-12,0,20), Position=UDim2.fromOffset(6,2), BackgroundTransparency=1, Text=tostring(option.title or option.Title or option.Text or ""), TextColor3=extTheme.Text, TextSize=14, Font=Enum.Font.GothamBold, TextWrapped=true, AutomaticSize=Enum.AutomaticSize.Y, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame})
+		extCreate("TextLabel", {Size=UDim2.new(1,-12,0,bodyHeight), Position=UDim2.fromOffset(6,22), BackgroundTransparency=1, Text=bodyText, TextColor3=extTheme.Dim, TextSize=11, Font=Enum.Font.Code, TextWrapped=true, TextXAlignment=Enum.TextXAlignment.Left, TextYAlignment=Enum.TextYAlignment.Top, Parent=frame})
 		option._gui = frame
 	elseif kind == "divider" then
 		local frame = extCreate("Frame", {LayoutOrder=option.position, Size=UDim2.new(1,0,0,20), BackgroundTransparency=1, Parent=parent.content})
@@ -2144,7 +2145,7 @@ local function extRenderOption(lib, option, parent)
 		local cam = extCreate("Camera", {FieldOfView = 35, Parent = view})
 		if cam then view.CurrentCamera = cam end
 		local world = extCreate("WorldModel", {Parent = view})
-		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -24, 1, -30), Position = UDim2.fromOffset(12, 26), BackgroundTransparency = 1, Text = "SETMODEL(instance) TO PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = frame})
+		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -24, 1, -30), Position = UDim2.fromOffset(12, 26), BackgroundTransparency = 1, Text = "SETMODEL(instance) TO PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = view})
 		option._gui = frame
 		option._titleGui = titleLabel
 		option._media = view
@@ -2158,8 +2159,15 @@ local function extRenderOption(lib, option, parent)
 				if self._placeholderGui then self._placeholderGui.Visible = true end
 				return self
 			end
+			if typeof(model) ~= "Instance" or not (model:IsA("Model") or model:IsA("BasePart")) then
+				if self._placeholderGui then self._placeholderGui.Visible = true; self._placeholderGui.Text = "SetModel expects a Model or BasePart" end
+				return self
+			end
 			local okClone, clone = pcall(function() return model:Clone() end)
-			if not okClone or not clone then return self end
+			if not okClone or not clone then
+				if self._placeholderGui then self._placeholderGui.Visible = true; self._placeholderGui.Text = "Model could not be cloned" end
+				return self
+			end
 			clone.Parent = self._world
 			local boxCFrame, boxSize
 			if clone:IsA("Model") then
@@ -2432,31 +2440,37 @@ function library:Notify(a,b,c)
 	local title=tostring(info.Title or info.title or "Notification")
 	local text=tostring(info.Description or info.Content or info.Text or info.text or "")
 	local duration=tonumber(info.Duration or info.Time or info.time) or 3
-	local side=tostring(info.Side or self.NotifySide or "Right")
+	local side=tostring(info.Side or self.NotifySide or "Right"):lower()
 	self._notifications=self._notifications or {}
 	local camera=workspace.CurrentCamera
 	local vp=camera and camera.ViewportSize or Vector2.new(800,600)
-	local width=math.min(250,math.max(190,vp.X-16))
-	local height=text=="" and 44 or 62
-	local n=extCreate("Frame",{Size=UDim2.fromOffset(width,height),AnchorPoint=Vector2.new(1,0),BackgroundColor3=Color3.fromRGB(18,18,20),BorderSizePixel=0,ZIndex=900,Parent=self.base})
+	local width=math.max(180,math.min(250,vp.X-16))
+	local textWidth=math.max(140,width-22)
+	local titleBounds=textService:GetTextSize(title,12,self.Font or Enum.Font.GothamBold,Vector2.new(textWidth,1000))
+	local bodyBounds=textService:GetTextSize(text,11,Enum.Font.Code,Vector2.new(textWidth,1000))
+	local titleHeight=math.max(16,titleBounds.Y)
+	local bodyHeight=text=="" and 0 or math.max(14,bodyBounds.Y)
+	local height=8+titleHeight+(text=="" and 0 or 4+bodyHeight)+8
+	local n=extCreate("Frame",{Size=UDim2.fromOffset(width,height),AnchorPoint=Vector2.new(side=="left" and 0 or 1,0),BackgroundColor3=Color3.fromRGB(15,15,17),BorderSizePixel=0,ZIndex=900,Parent=self.base})
 	if not n then return nil end
 	local index=#self._notifications
-	local x=-8
-	local y=12+(index*(height+6))
-	if side:lower()=="left" then n.AnchorPoint=Vector2.new(0,0); x=8 end
-	if side:lower()=="top" or side:lower()=="right" or side:lower()=="left" then n.Position=UDim2.new(side:lower()=="left" and 0 or 1,x,y,0) end
+	local x=side=="left" and 8 or -8
+	n.Position=UDim2.new(side=="left" and 0 or 1,x,0,12+index*(height+6))
 	extLine(n,Color3.fromRGB(60,60,65),1)
 	extCreate("Frame",{Size=UDim2.new(0,2,1,0),BackgroundColor3=extTheme.Accent,BorderSizePixel=0,ZIndex=901,Parent=n})
-	extCreate("TextLabel",{Size=UDim2.new(1,-18,0,18),Position=UDim2.fromOffset(10,5),BackgroundTransparency=1,Text=title,TextColor3=extTheme.Text,TextSize=12,Font=self.Font or Enum.Font.GothamBold,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,ZIndex=901,Parent=n})
-	extCreate("TextLabel",{Size=UDim2.new(1,-18,0,height-28),Position=UDim2.fromOffset(10,24),BackgroundTransparency=1,Text=text,TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=901,Parent=n})
+	extCreate("TextLabel",{Size=UDim2.new(1,-22,0,titleHeight),Position=UDim2.fromOffset(10,6),BackgroundTransparency=1,Text=title,TextColor3=extTheme.Text,TextSize=12,Font=self.Font or Enum.Font.GothamBold,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=901,Parent=n})
+	if text~="" then
+		extCreate("TextLabel",{Size=UDim2.new(1,-22,0,bodyHeight),Position=UDim2.fromOffset(10,6+titleHeight+4),BackgroundTransparency=1,Text=text,TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,ZIndex=901,Parent=n})
+	end
 	table.insert(self._notifications,n)
-	task.delay(duration,function()
+	task.delay(math.max(0.5,duration),function()
 		if n and n.Parent then n:Destroy() end
 		for i,v in ipairs(self._notifications) do if v==n then table.remove(self._notifications,i) break end end
-		for i,v in ipairs(self._notifications) do
+		local y=12
+		for _,v in ipairs(self._notifications) do
 			if v and v.Parent then
-				local h=v.AbsoluteSize.Y
-				if side:lower()=="left" then v.Position=UDim2.new(0,8,0,12+((i-1)*(h+6))) else v.Position=UDim2.new(1,-8,0,12+((i-1)*(h+6))) end
+				v.Position=UDim2.new(side=="left" and 0 or 1,side=="left" and 8 or -8,0,y)
+				y=y+v.AbsoluteSize.Y+6
 			end
 		end
 	end)
@@ -2792,8 +2806,25 @@ function library:RunExample()
 
 	local image = media:AddImage({text = "Image Preview", Image = "", Height = 120})
 	local viewport = media:AddViewport({text = "Viewport Preview", Height = 140})
-	if viewport.SetModel then viewport:SetModel(nil) end
-	media:AddLabel({text = "Set a valid image asset ID or model to preview real content."})
+	local imageIdInput = media:AddBox({text = "Image Asset ID", value = "", callback = function(value)
+		local assetId = tostring(value or ""):match("%d+")
+		if assetId and image and image.SetImage then image:SetImage(assetId) end
+	end})
+	local previewModel = Instance.new("Model")
+	previewModel.Name = "RunExamplePreviewModel"
+	local previewPart = Instance.new("Part")
+	previewPart.Name = "PreviewPart"
+	previewPart.Size = Vector3.new(3, 3, 3)
+	previewPart.Anchored = true
+	previewPart.Color = Color3.fromRGB(255, 65, 65)
+	previewPart.Material = Enum.Material.SmoothPlastic
+	previewPart.Parent = previewModel
+	previewModel.PrimaryPart = previewPart
+	if viewport and viewport.SetModel then viewport:SetModel(previewModel) end
+	media:AddButton({text = "Refresh Viewport Preview", callback = function()
+		if viewport and viewport.SetModel then viewport:SetModel(previewModel) end
+	end})
+	media:AddLabel({text = "Enter an accessible Roblox image asset ID above to update the image preview live."})
 
 	appearance:AddLabel({text = "Theme and appearance helpers"})
 	appearance:AddColor({text = "Accent Color", flag = "ExampleAccent", color = extTheme.Accent, callback = function(value) self:SetAccent(value) end})
