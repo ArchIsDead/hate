@@ -550,6 +550,7 @@ local function createSlider(option, parent)
 	local slider = library:Create("ImageLabel", {
 		Position = UDim2.new(0, 10, 0, 34),
 		Size = UDim2.new(1, -20, 0, 5),
+		Active = true,
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageColor3 = Color3.fromRGB(30, 30, 30),
@@ -612,62 +613,52 @@ local function createSlider(option, parent)
 		fill.Size = UDim2.new(option.value / (option.max - option.min), 0, 1, 0)
 	end
 	
-	local sliding
-	local inContact
-	main.InputBegan:connect(function(input)
-		if input.UserInputType == ui then
-			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-			sliding = true
-			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
-		elseif input.UserInputType == Enum.UserInputType.Touch then
-			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
-			sliding = true
-			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
+	local sliding = false
+	local slideTouch = nil
+	local inContact = false
+	slider.MouseEnter:Connect(function()
+		inContact = true
+	end)
+	slider.MouseLeave:Connect(function()
+		inContact = false
+		if not sliding then
+			tweenService:Create(fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			tweenService:Create(circle, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 		end
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
+	end)
+	local function setSliderFromX(x)
+		local width = slider.AbsoluteSize.X
+		if width <= 0 or option.max <= option.min then return end
+		local alpha = math.clamp((x - slider.AbsolutePosition.X) / width, 0, 1)
+		option:SetValue(option.min + alpha * (option.max - option.min))
+	end
+	slider.InputBegan:Connect(function(input)
+		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+			sliding = true
+			slideTouch = input.UserInputType == Enum.UserInputType.Touch and input or nil
+			tweenService:Create(fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			tweenService:Create(circle, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			setSliderFromX(input.Position.X)
+		elseif input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = true
 			if not sliding then
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
 			end
 		end
 	end)
-	
-	inputService.InputChanged:connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement and sliding then
-			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
+	inputService.InputChanged:Connect(function(input)
+		if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or (input.UserInputType == Enum.UserInputType.Touch and input == slideTouch)) then
+			setSliderFromX(input.Position.X)
 		end
 	end)
-
-	main.InputEnded:connect(function(input)
-		if input.UserInputType == ui then
+	inputService.InputEnded:Connect(function(input)
+		if sliding and (input.UserInputType == ui or (input.UserInputType == Enum.UserInputType.Touch and input == slideTouch)) then
 			sliding = false
-			if inContact then
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-			else
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-			end
-		elseif input.UserInputType == Enum.UserInputType.Touch then
-			sliding = false
-			if inContact then
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-			else
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-			end
-		end
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			inContact = false
-			inputvalue:ReleaseFocus()
-			if not sliding then
-				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-			end
+			slideTouch = nil
+			local color = inContact and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(60, 60, 60)
+			tweenService:Create(fill, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {ImageColor3 = color}):Play()
+			tweenService:Create(circle, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {Size = inContact and UDim2.new(2.8, 0, 2.8, 0) or UDim2.new(0, 0, 0, 0), ImageColor3 = color}):Play()
 		end
 	end)
 
@@ -688,7 +679,7 @@ local function createSlider(option, parent)
 		end
 		library.flags[self.flag] = value
 		self.value = value
-		inputvalue.Text = value
+		inputvalue.Text = tostring(value)
 		self.callback(value)
 	end
 end
@@ -802,8 +793,8 @@ local function createList(option, parent, holder)
 			option.mainHolder.Visible = true
 			library.activePopup = option
 			content.ScrollBarThickness = 6
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, popupX, 0, popupY)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, popupX, 0, popupY)}):Play()
 			for _,label in next, content:GetChildren() do
 				if label:IsA"TextLabel" then
 					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
@@ -819,8 +810,8 @@ local function createList(option, parent, holder)
 			option.mainHolder.Visible = true
 			library.activePopup = option
 			content.ScrollBarThickness = 6
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, popupX, 0, popupY)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, popupX, 0, popupY)}):Play()
 			for _,label in next, content:GetChildren() do
 				if label:IsA"TextLabel" then
 					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
@@ -1085,6 +1076,7 @@ local function createColorPickerWindow(option)
 	
 	option.hue = library:Create("ImageLabel", {
 		ZIndex = 3,
+		Active = true,
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 8, 1, -8),
 		Size = UDim2.new(1, -100, 0, 22),
@@ -1126,22 +1118,22 @@ local function createColorPickerWindow(option)
 			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
 			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
 			X = X < 0 and 0 or X > 0.995 and 0.995 or X
-			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+			option:SetColor(Color3.fromHSV(1 - X, sat, val))
 		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editinghue = true
 			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
 			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
 			X = X < 0 and 0 or X > 0.995 and 0.995 or X
-			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+			option:SetColor(Color3.fromHSV(1 - X, sat, val))
 		end
 	end)
 	
 	inputService.InputChanged:connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseMovement and editinghue then
+		if editinghue and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
 			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
 			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
 			X = X <= 0 and 0 or X >= 0.995 and 0.995 or X
-			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+			option:SetColor(Color3.fromHSV(1 - X, sat, val))
 		end
 	end)
 	
@@ -1153,10 +1145,26 @@ local function createColorPickerWindow(option)
 		end
 	end)
 	
+	option.dragHandle = library:Create("TextButton", {
+		ZIndex = 4,
+		Position = UDim2.fromOffset(8, 3),
+		Size = UDim2.new(1, -16, 0, 18),
+		BackgroundTransparency = 1,
+		Text = "COLOR PICKER",
+		TextColor3 = Color3.fromRGB(220, 220, 220),
+		TextSize = 11,
+		Font = Enum.Font.Code,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		AutoButtonColor = false,
+		Parent = option.mainHolder
+	})
+	if library.MakeDraggable then library:MakeDraggable(option.mainHolder, option.dragHandle) end
+
 	option.satval = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(0, 8, 0, 8),
-		Size = UDim2.new(1, -100, 1, -42),
+		Active = true,
+		Position = UDim2.new(0, 8, 0, 26),
+		Size = UDim2.new(1, -100, 1, -68),
 		BackgroundTransparency = 1,
 		BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
 		BorderSizePixel = 0,
@@ -1186,7 +1194,7 @@ local function createColorPickerWindow(option)
 			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
 			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
 			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
-			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+			option:SetColor(Color3.fromHSV(hue, X, 1 - Y))
 		elseif Input.UserInputType == Enum.UserInputType.Touch then
 			editingsatval = true
 			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
@@ -1195,34 +1203,39 @@ local function createColorPickerWindow(option)
 			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
 			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
 			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
-			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+			option:SetColor(Color3.fromHSV(hue, X, 1 - Y))
 		end
 	end)
 	
 	inputService.InputChanged:connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseMovement and editingsatval then
+		if editingsatval and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
 			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
 			Y = (option.satval.AbsolutePosition.Y + option.satval.AbsoluteSize.Y) - option.satval.AbsolutePosition.Y
 			X = (Input.Position.X - option.satval.AbsolutePosition.X) / X
 			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
 			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
 			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
-			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+			option:SetColor(Color3.fromHSV(hue, X, 1 - Y))
 		end
 	end)
 	
-	option.satval.InputEnded:connect(function(Input)
-		if Input.UserInputType == ui then
-			editingsatval = false
-		elseif Input.UserInputType == Enum.UserInputType.Touch then
+	option.satval.InputEnded:Connect(function(Input)
+		if Input.UserInputType == ui or Input.UserInputType == Enum.UserInputType.Touch then
 			editingsatval = false
 		end
 	end)
-	
+
+	inputService.InputEnded:Connect(function(Input)
+		if Input.UserInputType == ui or Input.UserInputType == Enum.UserInputType.Touch then
+			editinghue = false
+			editingsatval = false
+		end
+	end)
+
 	option.visualize2 = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(1, -8, 0, 8),
-		Size = UDim2.new(0, -80, 0, 80),
+		Position = UDim2.new(1, -80, 0, 26),
+		Size = UDim2.new(0, 72, 0, 60),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageColor3 = currentColor,
@@ -1234,8 +1247,8 @@ local function createColorPickerWindow(option)
 	
 	option.resetColor = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(1, -8, 0, 92),
-		Size = UDim2.new(0, -80, 0, 18),
+		Position = UDim2.new(1, -80, 0, 92),
+		Size = UDim2.new(0, 72, 0, 18),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageTransparency = 1,
@@ -1279,8 +1292,8 @@ local function createColorPickerWindow(option)
 	
 	option.undoColor = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(1, -8, 0, 112),
-		Size = UDim2.new(0, -80, 0, 18),
+		Position = UDim2.new(1, -80, 0, 112),
+		Size = UDim2.new(0, 72, 0, 18),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageTransparency = 1,
@@ -1330,8 +1343,8 @@ local function createColorPickerWindow(option)
 	
 	option.setColor = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(1, -8, 0, 132),
-		Size = UDim2.new(0, -80, 0, 18),
+		Position = UDim2.new(1, -80, 0, 132),
+		Size = UDim2.new(0, 72, 0, 18),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageTransparency = 1,
@@ -1375,8 +1388,8 @@ local function createColorPickerWindow(option)
 	
 	option.rainbow = library:Create("ImageLabel", {
 		ZIndex = 3,
-		Position = UDim2.new(1, -8, 0, 152),
-		Size = UDim2.new(0, -80, 0, 18),
+		Position = UDim2.new(1, -80, 0, 152),
+		Size = UDim2.new(0, 72, 0, 18),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageTransparency = 1,
@@ -1443,6 +1456,7 @@ local function createColor(option, parent, holder)
 	option.main = library:Create("TextLabel", {
 		LayoutOrder = option.position,
 		Size = UDim2.new(1, 0, 0, 31),
+		Active = true,
 		BackgroundTransparency = 1,
 		Text = " " .. option.text,
 		TextSize = 17,
@@ -1453,9 +1467,9 @@ local function createColor(option, parent, holder)
 	})
 	
 	local colorBoxOutline = library:Create("ImageLabel", {
-		Position = UDim2.new(1, -6, 0, 4),
-		Size = UDim2.new(-1, 10, 1, -10),
-		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		Position = UDim2.new(1, -28, 0, 4),
+		Size = UDim2.new(0, 22, 0, 22),
+		Active = true,
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://3570695787",
 		ImageColor3 = Color3.fromRGB(100, 100, 100),
@@ -1485,12 +1499,17 @@ local function createColor(option, parent, holder)
 				library.activePopup:Close()
 			end
 			local position = option.main.AbsolutePosition
-			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			local camera = workspace.CurrentCamera
+			local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
+			local popupX = math.clamp(position.X - 5, 8, math.max(8, viewport.X - 248))
+			local popupY = position.Y + option.main.AbsoluteSize.Y + 4
+			if popupY + 188 > viewport.Y then popupY = math.max(8, position.Y - 184) end
+			option.mainHolder.Position = UDim2.new(0, popupX, 0, popupY - 6)
 			option.open = true
 			option.mainHolder.Visible = true
 			library.activePopup = option
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, popupX, 0, popupY)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, popupX, 0, popupY)}):Play()
 			tweenService:Create(option.satval, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
 			for _,object in next, option.mainHolder:GetDescendants() do
 				if object:IsA"TextLabel" then
@@ -1507,12 +1526,17 @@ local function createColor(option, parent, holder)
 				library.activePopup:Close()
 			end
 			local position = option.main.AbsolutePosition
-			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			local camera = workspace.CurrentCamera
+			local viewport = camera and camera.ViewportSize or Vector2.new(800, 600)
+			local popupX = math.clamp(position.X - 5, 8, math.max(8, viewport.X - 248))
+			local popupY = position.Y + option.main.AbsoluteSize.Y + 4
+			if popupY + 188 > viewport.Y then popupY = math.max(8, position.Y - 184) end
+			option.mainHolder.Position = UDim2.new(0, popupX, 0, popupY - 6)
 			option.open = true
 			option.mainHolder.Visible = true
 			library.activePopup = option
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
-			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, popupX, 0, popupY)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, popupX, 0, popupY)}):Play()
 			tweenService:Create(option.satval, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
 			for _,object in next, option.mainHolder:GetDescendants() do
 				if object:IsA"TextLabel" then
@@ -1655,6 +1679,7 @@ local function getFnctions(parent)
 		option.text = tostring(option.text)
 		option.min = typeof(option.min) == "number" and option.min or 0
 		option.max = typeof(option.max) == "number" and option.max or 0
+		if option.max <= option.min then option.max = option.min + 1 end
 		option.dual = typeof(option.dual) == "boolean" and option.dual or false
 		option.value = math.clamp(typeof(option.value) == "number" and option.value or option.min, option.min, option.max)
 		option.value2 = typeof(option.value2) == "number" and option.value2 or option.max
@@ -1717,22 +1742,24 @@ local function getFnctions(parent)
 	function parent:AddImage(option)
 		option = typeof(option) == "table" and option or {}
 		option.text = tostring(option.text or option.Text or "Image")
-		option.Image = tostring(option.Image or option.image or option.value or "")
+		local image = option.Image or option.image or option.value or option.Value or option.Default or ""
+		if typeof(image) == "number" then image = "rbxassetid://" .. tostring(image) end
+		option.Image = tostring(image)
 		option.type = "label"
 		option.__extendedKind = "image"
 		option.position = #self.options
 		table.insert(self.options, option)
-		return option
-	end
-
-	function parent:AddVideo(option)
-		option = typeof(option) == "table" and option or {}
-		option.text = tostring(option.text or option.Text or "Video")
-		option.Video = tostring(option.Video or option.video or option.value or "")
-		option.type = "label"
-		option.__extendedKind = "video"
-		option.position = #self.options
-		table.insert(self.options, option)
+		function option:SetImage(value)
+			if typeof(value) == "number" then value = "rbxassetid://" .. tostring(value) end
+			self.Image = tostring(value or "")
+			if self._media then self._media.Image = self.Image end
+			if self._placeholderGui then
+				self._placeholderGui.Visible = self.Image == "" or not (self._media and self._media.IsLoaded)
+				self._placeholderGui.Text = self.Image == "" and "IMAGE PREVIEW" or "LOADING IMAGE..."
+			end
+			return self
+		end
+		option.SetValue = option.SetImage
 		return option
 	end
 
@@ -1744,6 +1771,11 @@ local function getFnctions(parent)
 		option.__extendedKind = "viewport"
 		option.position = #self.options
 		table.insert(self.options, option)
+		function option:SetModel(model)
+			self.Model = model
+			if self._applyModel then return self:_applyModel(model) end
+			return self
+		end
 		return option
 	end
 
@@ -1976,6 +2008,7 @@ local function extDecorateOption(lib, o)
 	o.SetText = function(self, v)
 		self.Text = tostring(v or "")
 		self.text = self.Text
+		if self._titleGui then self._titleGui.Text = self.Text end
 		if self._gui and self._gui:IsA("TextLabel") then self._gui.Text = " " .. self.Text end
 		return self
 	end
@@ -2021,7 +2054,6 @@ local function extSetOptionValue(lib, o, value, ...)
 	if o.__extendedKind == "progress" and o.Set then return o:Set(value) end
 	if o.__extendedKind == "stat" and o.Set then return o:Set(value) end
 	if o.__extendedKind == "image" and o.SetImage then return o:SetImage(value) end
-	if o.__extendedKind == "video" and o.SetVideo then return o:SetVideo(value) end
 	if o.__extendedKind == "viewport" and o.SetModel then return o:SetModel(value) end
 	lib.flags[o.flag] = value
 	o.value = value
@@ -2074,46 +2106,79 @@ local function extRenderOption(lib, option, parent)
 		option.Set=function(self,v) self.value=math.clamp(tonumber(v) or self.min,self.min,self.max); lib.flags[self.flag]=self.value; local p=self:GetPercentage()/100; if self._fillGui then self._fillGui.Size=UDim2.new(p,0,1,0) end; if self._valueGui then self._valueGui.Text=tostring(round(self.value,self.rounding or 1)) end; extFireChanged(self,self.value); return self end
 		option:Set(option.value)
 	elseif kind == "image" then
-		local h=math.max(40,tonumber(option.Height or option.height) or 120)
-		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
-		local image=extCreate("ImageLabel",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(15,15,17),BorderSizePixel=0,Image=tostring(option.Image or option.image or ""),ImageTransparency=tonumber(option.Transparency or option.transparency) or 0,ScaleType=option.ScaleType or Enum.ScaleType.Fit,Parent=frame})
-		extLine(image,Color3.fromRGB(60,60,65),1)
-		option._gui=frame; option._media=image
-		function option:SetImage(v) self.Image=v; if self._media then self._media.Image=tostring(v or "") end; return self end
-	elseif kind == "video" then
-		local h=math.max(60,tonumber(option.Height or option.height) or 150)
-		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
-		local video=extCreate("VideoFrame",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Looped=option.Looped~=false,Playing=option.Playing==true,Parent=frame})
-		if video then pcall(function() video.Video=tostring(option.Video or option.video or "") end) end
-		extLine(video,Color3.fromRGB(60,60,65),1)
-		option._gui=frame; option._media=video
-		function option:SetVideo(v) self.Video=v; if self._media then pcall(function() self._media.Video=tostring(v or "") end) end; return self end
-		function option:Play() if self._media then pcall(function() self._media:Play() end) end; return self end
-		function option:Pause() if self._media then pcall(function() self._media:Pause() end) end; return self end
-	elseif kind == "viewport" then
-		local h=math.max(60,tonumber(option.Height or option.height) or 150)
-		local frame=extCreate("Frame",{LayoutOrder=option.position,Size=UDim2.new(1,0,0,h),BackgroundTransparency=1,Parent=parent.content})
-		local view=extCreate("ViewportFrame",{Size=UDim2.new(1,-12,1,-8),Position=UDim2.fromOffset(6,4),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Ambient=Color3.fromRGB(180,180,180),LightColor=Color3.fromRGB(255,255,255),Parent=frame})
-		extLine(view,Color3.fromRGB(60,60,65),1)
-		local cam=extCreate("Camera",{Parent=view})
-		if cam then view.CurrentCamera=cam end
-		option._gui=frame; option._media=view; option._camera=cam
-		function option:SetModel(model)
-			if not self._media or not model then return self end
-			for _,child in ipairs(self._media:GetChildren()) do if child:IsA("Model") or child:IsA("BasePart") or child:IsA("Folder") then child:Destroy() end end
-			local clone
-			local okClone, resultClone=pcall(function() return model:Clone() end)
-			if okClone then clone=resultClone end
-			if clone then clone.Parent=self._media end
-			if clone and self._camera then
-				local okBox,cf,size=pcall(function() return clone:GetBoundingBox() end)
-				if okBox and cf and size then
-					local radius=math.max(size.X,size.Y,size.Z)
-					self._camera.CFrame=cf*CFrame.new(0,0,math.max(2,radius*2.2))
-				end
+		local h = math.max(76, tonumber(option.Height or option.height) or 128)
+		local frame = extCreate("Frame", {LayoutOrder = option.position, Size = UDim2.new(1, 0, 0, h), BackgroundTransparency = 1, Parent = parent.content})
+		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = tostring(option.text or option.Text or "Image"), TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
+		local image = extCreate("ImageLabel", {Size = UDim2.new(1, -12, 1, -26), Position = UDim2.fromOffset(6, 22), BackgroundColor3 = Color3.fromRGB(15, 15, 17), BorderSizePixel = 0, Image = "", ImageTransparency = tonumber(option.Transparency or option.transparency) or 0, ScaleType = option.ScaleType or Enum.ScaleType.Fit, Parent = frame})
+		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -16, 1, -8), Position = UDim2.fromOffset(8, 4), BackgroundTransparency = 1, Text = "IMAGE PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = image})
+		extLine(image, Color3.fromRGB(60, 60, 65), 1)
+		option._gui = frame
+		option._titleGui = titleLabel
+		option._media = image
+		option._placeholderGui = placeholder
+		image:GetPropertyChangedSignal("IsLoaded"):Connect(function()
+			if option._placeholderGui and option.Image ~= "" then
+				option._placeholderGui.Visible = not image.IsLoaded
+				option._placeholderGui.Text = image.IsLoaded and "" or "IMAGE PREVIEW UNAVAILABLE"
+			end
+		end)
+		function option:SetImage(v)
+			if typeof(v) == "number" then v = "rbxassetid://" .. tostring(v) end
+			self.Image = tostring(v or "")
+			if self._media then self._media.Image = self.Image end
+			if self._placeholderGui then
+				self._placeholderGui.Visible = self.Image == "" or not (self._media and self._media.IsLoaded)
+				self._placeholderGui.Text = self.Image == "" and "IMAGE PREVIEW" or "LOADING IMAGE..."
 			end
 			return self
 		end
+		option.SetValue = option.SetImage
+		option:SetImage(option.Image or option.image or option.Value or option.value or option.Default or "")
+		if image.IsLoaded and placeholder then placeholder.Visible = false end
+	elseif kind == "viewport" then
+		local h = math.max(76, tonumber(option.Height or option.height) or 150)
+		local frame = extCreate("Frame", {LayoutOrder = option.position, Size = UDim2.new(1, 0, 0, h), BackgroundTransparency = 1, Parent = parent.content})
+		local titleLabel = extCreate("TextLabel", {Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 0), BackgroundTransparency = 1, Text = tostring(option.text or option.Text or "Viewport"), TextColor3 = extTheme.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
+		local view = extCreate("ViewportFrame", {Size = UDim2.new(1, -12, 1, -26), Position = UDim2.fromOffset(6, 22), BackgroundColor3 = Color3.fromRGB(15, 15, 17), BorderSizePixel = 0, Ambient = Color3.fromRGB(180, 180, 180), LightColor = Color3.fromRGB(255, 255, 255), Parent = frame})
+		extLine(view, Color3.fromRGB(60, 60, 65), 1)
+		local cam = extCreate("Camera", {FieldOfView = 35, Parent = view})
+		if cam then view.CurrentCamera = cam end
+		local world = extCreate("WorldModel", {Parent = view})
+		local placeholder = extCreate("TextLabel", {Size = UDim2.new(1, -24, 1, -30), Position = UDim2.fromOffset(12, 26), BackgroundTransparency = 1, Text = "SETMODEL(instance) TO PREVIEW", TextColor3 = extTheme.Dim, TextSize = 11, Font = Enum.Font.Code, TextWrapped = true, Parent = frame})
+		option._gui = frame
+		option._titleGui = titleLabel
+		option._media = view
+		option._world = world
+		option._camera = cam
+		option._placeholderGui = placeholder
+		function option:_applyModel(model)
+			if not self._world then return self end
+			for _, child in ipairs(self._world:GetChildren()) do child:Destroy() end
+			if not model then
+				if self._placeholderGui then self._placeholderGui.Visible = true end
+				return self
+			end
+			local okClone, clone = pcall(function() return model:Clone() end)
+			if not okClone or not clone then return self end
+			clone.Parent = self._world
+			local boxCFrame, boxSize
+			if clone:IsA("Model") then
+				local okBox, cf, size = pcall(function() return clone:GetBoundingBox() end)
+				if okBox then boxCFrame, boxSize = cf, size end
+			elseif clone:IsA("BasePart") then
+				boxCFrame, boxSize = clone.CFrame, clone.Size
+			end
+			if boxCFrame and boxSize and self._camera then
+				local radius = math.max(boxSize.X, boxSize.Y, boxSize.Z, 1)
+				local distance = radius * 2.4
+				local center = boxCFrame.Position
+				self._camera.CFrame = CFrame.lookAt(center + Vector3.new(0, radius * 0.15, distance), center)
+				self._camera.Focus = CFrame.new(center)
+			end
+			if self._placeholderGui then self._placeholderGui.Visible = false end
+			return self
+		end
+		if option.Model then option:_applyModel(option.Model) end
 	elseif kind == "console" then
 		local frame = extCreate("Frame", {LayoutOrder=option.position, Size=UDim2.new(1,0,0,tonumber(option.height) or 88), BackgroundColor3=Color3.fromRGB(15,15,17), BorderSizePixel=0, Parent=parent.content})
 		extLine(frame,Color3.fromRGB(60,60,65),1)
@@ -2214,7 +2279,6 @@ local function decorateParent(lib, parent)
 	local oldLabel=parent.AddLabel
 	local oldFolder=parent.AddFolder
 	local oldImage=parent.AddImage
-	local oldVideo=parent.AddVideo
 	local oldViewport=parent.AddViewport
 
 	local function wrapResult(o)
@@ -2290,22 +2354,15 @@ local function decorateParent(lib, parent)
 		local o=extNormalize(a,b); o.__extendedKind="console"; o.type="label"; o.height=tonumber(o.Height or o.height) or 88; o.position=#self.options; o.flag=o.Flag or o.Text; table.insert(self.options,o); extDecorateOption(lib,o); o.Append=function(self,text) if not self._console then self.__pending=self.__pending or {}; table.insert(self.__pending,tostring(text)); return self end; local g=extCreate("TextLabel",{Size=UDim2.new(1,-4,0,16),BackgroundTransparency=1,Text=tostring(text),TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextXAlignment=Enum.TextXAlignment.Left,Parent=self._console}); return g end; o.Clear=function(self) if self._console then for _,c in ipairs(self._console:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end end; return self end; return o
 	end
 	parent.AddImage=function(self,a,b)
-		local o=extNormalize(a,b); o.Image=o.Image or o.image or o.Value or ""; o.__extendedKind="image"; o.type="label"
+		local o=extNormalize(a,b); o.Image=o.Image or o.image or o.Value or o.value or o.Default or ""; if typeof(o.Image)=="number" then o.Image="rbxassetid://"..tostring(o.Image) end; o.__extendedKind="image"; o.type="label"
 		local r=oldImage(self,o); extDecorateOption(lib,r); return r
-	end
-	parent.AddVideo=function(self,a,b)
-		local o=extNormalize(a,b); o.Video=o.Video or o.video or o.Value or ""; o.__extendedKind="video"; o.type="label"
-		local r=oldVideo(self,o); extDecorateOption(lib,r); return r
 	end
 	parent.AddViewport=function(self,a,b)
 		local o=extNormalize(a,b); o.Model=o.Model or o.model; o.__extendedKind="viewport"; o.type="label"
 		local r=oldViewport(self,o); extDecorateOption(lib,r); return r
 	end
 	parent.CreateImage=parent.AddImage
-	parent.CreateVideo=parent.AddVideo
 	parent.CreateViewport=parent.AddViewport
-	parent.AddMedia=parent.AddVideo
-	parent.CreateMedia=parent.AddVideo
 
 	parent.AddParagraph=parent.AddParagraph
 	parent.AddSeparator=parent.AddDivider
@@ -2698,27 +2755,85 @@ end
 
 function library:RunExample()
 	if self.Unloaded then return nil end
-	local w=self:CreateWindow({Title="Library Example",AutoShow=true,ToggleKeybind=Enum.KeyCode.RightControl})
-	local main=w:AddFolder("Main")
-	local t=main:AddToggle("Example Toggle",{Default=true,Callback=function(v) self:Notify("Toggle",tostring(v),1.5) end})
-	t:OnChanged(function(v) self.flags.ExampleToggle=v end)
-	main:AddButton("Example Button",{Callback=function() self:Notify("Button","Clicked",1.5) end})
-	main:AddSlider("Example Slider",{Min=0,Max=100,Default=50,Rounding=1})
-	main:AddDropdown("Example Dropdown",{Values={"One","Two","Three"},Default="One"})
-	main:AddInput("Example Input",{Default="Hello",Placeholder="Type here..."})
-	main:AddKeybind("Example Keybind",{Default=Enum.KeyCode.F})
-	main:AddColorPicker("Example Color",{Default=Color3.fromRGB(80,200,100)})
-	main:AddLabel("Label element")
-	main:AddParagraph({Title="Paragraph",Description="Paragraph element."})
-	main:AddDivider()
-	local st=main:AddStat("Stat",{Default=42}); st:Set(84)
-	local pr=main:AddProgress("Progress",{Min=0,Max=100,Default=65}); pr:Set(75)
-	main:AddConsole({Text="Console ready."}):Append("Example line")
-	local nested=main:AddFolder("Nested"); local dep=nested:AddToggle("Dependent",{Default=true}); local lbl=nested:AddLabel("Dependency target"); lbl:AddDependency("Dependent",true)
-	self:OnFlagChange("Example Toggle",function() end)
-	self:Notify("Library","Example loaded",2)
+
+	local window = self:CreateWindow("suic1.de | RunExample")
+	local main = window:AddFolder("Main Elements")
+	local controls = window:AddFolder("Advanced Controls")
+	local media = window:AddFolder("Media Preview")
+	local appearance = window:AddFolder("Appearance")
+	local configuration = window:AddFolder("Configuration")
+	local diagnostics = window:AddFolder("Diagnostics")
+
+	main:AddLabel({text = "Tora-style controls and extended elements"})
+	main:AddToggle({text = "Toggle", flag = "ExampleToggle", state = true, callback = function(value) self:Notify("Toggle", tostring(value), 2) end})
+	main:AddButton({text = "Button", flag = "ExampleButton", callback = function() self:Notify("Button", "Button callback fired", 2) end})
+	main:AddSlider({text = "Slider", flag = "ExampleSlider", min = 0, max = 100, value = 50, float = 1, callback = function(value) self.flags.ExampleSlider = value end})
+	main:AddList({text = "Dropdown", flag = "ExampleDropdown", values = {"Red", "Green", "Blue"}, value = "Red", callback = function(value) self.flags.ExampleDropdown = value end})
+	main:AddBox({text = "Input", flag = "ExampleInput", value = "Hello", callback = function(value) self.flags.ExampleInput = value end})
+	main:AddBind({text = "Keybind", flag = "ExampleKeybind", key = "X", hold = false, callback = function() self:Notify("Keybind", "Keybind activated", 2) end})
+	main:AddColor({text = "Color Picker", flag = "ExampleColor", color = Color3.fromRGB(255, 65, 65), callback = function(value) self.flags.ExampleColor = value end})
+
+	controls:AddParagraph({Title = "Paragraph", Description = "Extended elements rendered in the same library window."})
+	controls:AddDivider()
+	controls:AddText({Text = "Text element"})
+	controls:AddCheckbox({text = "Checkbox", flag = "ExampleCheckbox", state = false, callback = function(value) self.flags.ExampleCheckbox = value end})
+	controls:AddDropdown({text = "Alias Dropdown", flag = "ExampleAliasDropdown", values = {"Option A", "Option B", "Option C"}, value = "Option A", callback = function(value) self.flags.ExampleAliasDropdown = value end})
+	controls:AddInput({text = "Alias Input", flag = "ExampleAliasInput", value = "Editable text", callback = function(value) self.flags.ExampleAliasInput = value end})
+	controls:AddKeybind({text = "Alias Keybind", flag = "ExampleAliasKeybind", key = "Z", callback = function() self:Notify("Alias Keybind", "Activated", 2) end})
+	controls:AddColorPicker({text = "Alias Color Picker", flag = "ExampleAliasColor", color = Color3.fromRGB(80, 200, 100), callback = function(value) self.flags.ExampleAliasColor = value end})
+	controls:AddStat({Text = "Example Stat", Flag = "ExampleStat", Default = 42})
+	controls:AddProgress({Text = "Example Progress", Flag = "ExampleProgress", Min = 0, Max = 100, Default = 65})
+	local console = controls:AddConsole({Text = "Example Console", Height = 88})
+	console:Append("RunExample initialized")
+	console:Append("Console append is working")
+	local nested = controls:AddFolder("Nested Folder")
+	nested:AddLabel({text = "Nested folder content"})
+	nested:AddToggle({text = "Nested Toggle", flag = "ExampleNestedToggle", state = false})
+
+	local image = media:AddImage({text = "Image Preview", Image = "", Height = 120})
+	local viewport = media:AddViewport({text = "Viewport Preview", Height = 140})
+	if viewport.SetModel then viewport:SetModel(nil) end
+	media:AddLabel({text = "Set a valid image asset ID or model to preview real content."})
+
+	appearance:AddLabel({text = "Theme and appearance helpers"})
+	appearance:AddColor({text = "Accent Color", flag = "ExampleAccent", color = extTheme.Accent, callback = function(value) self:SetAccent(value) end})
+	appearance:AddButton({text = "Reset Accent", callback = function() self:SetAccent(Color3.fromRGB(255, 65, 65)) end})
+
+	configuration:AddButton({text = "Save Example Config", callback = function() self:SaveConfig("RunExample"); self:Notify("Config", "Save requested", 2) end})
+	configuration:AddButton({text = "Load Example Config", callback = function() self:LoadConfig("RunExample") end})
+	configuration:AddButton({text = "List Configs", callback = function()
+		local configs = self:ListConfigs()
+		if type(configs) == "table" then self:Notify("Configs", #configs > 0 and table.concat(configs, ", ") or "No configs found", 3) else self:Notify("Configs", tostring(configs), 3) end
+	end})
+	configuration:AddButton({text = "Delete Example Config", callback = function() self:DeleteConfig("RunExample") end})
+
+	diagnostics:AddLabel({text = "Library API diagnostics"})
+	diagnostics:AddButton({text = "Run API Checks", callback = function()
+		local methods = {"Init", "Close", "Notify", "OnFlagChange", "SetFlag", "GetFlag", "Set", "Get", "SetAccent", "SetKeybind", "SetToggleKey", "SaveConfig", "LoadConfig", "DeleteConfig", "ListConfigs", "SetDPIScale", "SetNotifySide", "SetFont", "SetTheme", "SetBackgroundImage", "GetTextBounds", "GetKeyString", "GetBetterColor", "GetLighterColor", "GetDarkerColor", "MouseIsOverFrame", "IsInsideFrame", "AddToRegistry", "RemoveFromRegistry", "UpdateColorsUsingRegistry", "MakeLine", "AddBlank", "AddOutline", "GetIcon", "GetCustomIcon", "SetIconModule", "SetCustomIcon", "MakeDraggable", "Validate", "AddDialog", "CreateLoading", "Unload", "RunExample"}
+		local available, missing = 0, {}
+		for _, name in ipairs(methods) do if type(self[name]) == "function" then available += 1 else table.insert(missing, name) end end
+		console:Append("API methods available: " .. tostring(available) .. "/" .. tostring(#methods))
+		if #missing > 0 then console:Append("Missing: " .. table.concat(missing, ", ")) end
+		self:Notify("API Checks", tostring(available) .. "/" .. tostring(#methods) .. " methods found", 3)
+	end})
+	diagnostics:AddButton({text = "Test Flag Events", callback = function()
+		self:OnFlagChange("ExampleToggle", function(value) console:Append("ExampleToggle changed: " .. tostring(value)) end)
+		self:SetFlag("ExampleToggle", not self:GetFlag("ExampleToggle"))
+	end})
+	diagnostics:AddButton({text = "Test Dialog", callback = function()
+		local dialog = self:AddDialog(window, {Title = "Dialog Test", Description = "Dialog creation and footer buttons are available."})
+		if dialog then dialog:AddFooterButton("ok", {Text = "OK", Callback = function() dialog:Dismiss() end}) end
+	end})
+	diagnostics:AddButton({text = "Test Loading Panel", callback = function() self:CreateLoading("Loading Test", "RunExample loading helper") end})
+
+	self:SetAccent(Color3.fromRGB(255, 65, 65))
+	self:SetKeybind(Enum.KeyCode.RightControl)
+	self:SetNotifySide("Right")
+	self:SetDPIScale(1)
+	self:OnFlagChange("ExampleToggle", function(value) self.flags.ExampleToggle = value end)
 	self:Init()
-	return w
+	self:Notify("RunExample", "All example sections initialized", 3)
+	return window
 end
 
 library.Options=library.Options or {}
