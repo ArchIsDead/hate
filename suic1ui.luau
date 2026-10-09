@@ -1714,6 +1714,39 @@ local function getFnctions(parent)
 		return option
 	end
 	
+	function parent:AddImage(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text or option.Text or "Image")
+		option.Image = tostring(option.Image or option.image or option.value or "")
+		option.type = "label"
+		option.__extendedKind = "image"
+		option.position = #self.options
+		table.insert(self.options, option)
+		return option
+	end
+
+	function parent:AddVideo(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text or option.Text or "Video")
+		option.Video = tostring(option.Video or option.video or option.value or "")
+		option.type = "label"
+		option.__extendedKind = "video"
+		option.position = #self.options
+		table.insert(self.options, option)
+		return option
+	end
+
+	function parent:AddViewport(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text or option.Text or "Viewport")
+		option.Model = option.Model or option.model
+		option.type = "label"
+		option.__extendedKind = "viewport"
+		option.position = #self.options
+		table.insert(self.options, option)
+		return option
+	end
+
 	function parent:AddFolder(title)
 		local option = {}
 		option.title = tostring(title)
@@ -1987,9 +2020,13 @@ local function extSetOptionValue(lib, o, value, ...)
 	if o.type == "color" and o.SetColor then return o:SetColor(value) end
 	if o.__extendedKind == "progress" and o.Set then return o:Set(value) end
 	if o.__extendedKind == "stat" and o.Set then return o:Set(value) end
+	if o.__extendedKind == "image" and o.SetImage then return o:SetImage(value) end
+	if o.__extendedKind == "video" and o.SetVideo then return o:SetVideo(value) end
+	if o.__extendedKind == "viewport" and o.SetModel then return o:SetModel(value) end
 	lib.flags[o.flag] = value
 	o.value = value
-	return value
+	if o._valueGui then o._valueGui.Text=tostring(value) end
+	return o
 end
 
 local function extFindGui(parent, option)
@@ -2176,6 +2213,9 @@ local function decorateParent(lib, parent)
 	local oldColor=parent.AddColor
 	local oldLabel=parent.AddLabel
 	local oldFolder=parent.AddFolder
+	local oldImage=parent.AddImage
+	local oldVideo=parent.AddVideo
+	local oldViewport=parent.AddViewport
 
 	local function wrapResult(o)
 		o.__parent = parent
@@ -2249,18 +2289,23 @@ local function decorateParent(lib, parent)
 	function parent:AddConsole(a,b)
 		local o=extNormalize(a,b); o.__extendedKind="console"; o.type="label"; o.height=tonumber(o.Height or o.height) or 88; o.position=#self.options; o.flag=o.Flag or o.Text; table.insert(self.options,o); extDecorateOption(lib,o); o.Append=function(self,text) if not self._console then self.__pending=self.__pending or {}; table.insert(self.__pending,tostring(text)); return self end; local g=extCreate("TextLabel",{Size=UDim2.new(1,-4,0,16),BackgroundTransparency=1,Text=tostring(text),TextColor3=extTheme.Dim,TextSize=11,Font=Enum.Font.Code,TextXAlignment=Enum.TextXAlignment.Left,Parent=self._console}); return g end; o.Clear=function(self) if self._console then for _,c in ipairs(self._console:GetChildren()) do if c:IsA("TextLabel") then c:Destroy() end end end; return self end; return o
 	end
-	function parent:AddImage(a,b)
-		local o=extNormalize(a,b); o.__extendedKind="image"; o.type="label"; o.position=#self.options; o.Image=o.Image or o.image or o.Value or ""; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	parent.AddImage=function(self,a,b)
+		local o=extNormalize(a,b); o.Image=o.Image or o.image or o.Value or ""; o.__extendedKind="image"; o.type="label"
+		local r=oldImage(self,o); extDecorateOption(lib,r); return r
 	end
-	function parent:AddVideo(a,b)
-		local o=extNormalize(a,b); o.__extendedKind="video"; o.type="label"; o.position=#self.options; o.Video=o.Video or o.video or o.Value or ""; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	parent.AddVideo=function(self,a,b)
+		local o=extNormalize(a,b); o.Video=o.Video or o.video or o.Value or ""; o.__extendedKind="video"; o.type="label"
+		local r=oldVideo(self,o); extDecorateOption(lib,r); return r
 	end
-	function parent:AddViewport(a,b)
-		local o=extNormalize(a,b); o.__extendedKind="viewport"; o.type="label"; o.position=#self.options; o.Model=o.Model or o.model; table.insert(self.options,o); extDecorateOption(lib,o); return o
+	parent.AddViewport=function(self,a,b)
+		local o=extNormalize(a,b); o.Model=o.Model or o.model; o.__extendedKind="viewport"; o.type="label"
+		local r=oldViewport(self,o); extDecorateOption(lib,r); return r
 	end
 	parent.CreateImage=parent.AddImage
 	parent.CreateVideo=parent.AddVideo
 	parent.CreateViewport=parent.AddViewport
+	parent.AddMedia=parent.AddVideo
+	parent.CreateMedia=parent.AddVideo
 
 	parent.AddParagraph=parent.AddParagraph
 	parent.AddSeparator=parent.AddDivider
@@ -2499,6 +2544,33 @@ function library:Configure(options)
 	if options.BackgroundImage then self:SetBackgroundImage(options.BackgroundImage,options.BackgroundTransparency) end
 	if options.ToggleKeybind then self:SetKeybind(options.ToggleKeybind) end
 	return self
+end
+
+function library:Toggle(value)
+	local state=value
+	if state==nil then state=not self.open end
+	self.open=state==true
+	for _,w in ipairs(self.windows or {}) do if w.main then w.main.Visible=self.open and w.open~=false end end
+	return self
+end
+
+function library:SetToggleKeybind(key) return self:SetKeybind(key) end
+library.SetMenuKeybind=library.SetKeybind
+
+function library:UpdateColorsUsingRegistry()
+	return self:ChangeTheme({Accent=extTheme.Accent,Background=extTheme.Background,Panel=extTheme.Panel,Text=extTheme.Text,Dim=extTheme.Dim})
+end
+
+function library:AddTooltip(tooltip,disabledTooltip,element)
+	if not element then return nil end
+	local target=element._gui or element
+	if not target or not target:IsA("GuiObject") then return nil end
+	local tip=extCreate("TextLabel",{Size=UDim2.fromOffset(180,24),BackgroundColor3=Color3.fromRGB(15,15,17),BorderSizePixel=0,Text="",TextColor3=Color3.fromRGB(220,220,220),TextSize=12,Font=Enum.Font.Code,Visible=false,ZIndex=1000,Parent=self.base})
+	if not tip then return nil end
+	extLine(tip,Color3.fromRGB(60,60,65),1)
+	extConnect(target.MouseEnter,function() tip.Text=element.Disabled and tostring(disabledTooltip or tooltip or "") or tostring(tooltip or ""); tip.Size=UDim2.fromOffset(math.min(240,math.max(80,textService:GetTextSize(tip.Text,12,Enum.Font.Code,Vector2.new(220,100)).X+12)),24); tip.Position=UDim2.fromOffset(target.AbsolutePosition.X,target.AbsolutePosition.Y+target.AbsoluteSize.Y+4); tip.Visible=true end)
+	extConnect(target.MouseLeave,function() tip.Visible=false end)
+	return tip
 end
 
 function library:SetBackgroundImage(image,transparency)
