@@ -85,10 +85,19 @@
     const ls = $('ls');
     const dt = $('dt');
 
+    const PROXY = 'https://corsproxy.io/?';
+    const API = 'https://r4-api.my.id/sekolah2';
+
     function clearOutput() {
       ls.innerHTML = '';
       dt.classList.remove('show');
       dt.innerHTML = '';
+    }
+
+    async function getJson(url) {
+      const res = await fetch(PROXY + encodeURIComponent(url));
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
     }
 
     async function search() {
@@ -100,38 +109,44 @@
       st.textContent = 'Mencari data sekolah...';
 
       try {
-        const res = await fetch('https://r4-api.my.id/sekolah2?q=' + encodeURIComponent(q));
-        const data = await res.json();
+        const data = await getJson(API + '?q=' + encodeURIComponent(q));
 
-        if (!data.status || !data.data || data.data.length === 0) {
+        if (!data || data.status !== true || !Array.isArray(data.data) || data.data.length === 0) {
           st.innerHTML = '<span class="err">Data tidak tersedia untuk dump database.</span>';
           return;
         }
 
         st.textContent = `Ditemukan ${data.total} sekolah. Pilih untuk melihat detail.`;
 
+        const frag = document.createDocumentFragment();
         data.data.forEach((s) => {
           const it = document.createElement('div');
           it.className = 'it';
+
           const nm = document.createElement('div');
           nm.className = 'nm';
           nm.textContent = s.nama || '-';
+
           const m1 = document.createElement('div');
           m1.className = 'mt';
           m1.textContent = `${s.bentuk_pendidikan || '-'} • ${s.status_sekolah || '-'} • NPSN: ${s.npsn || '-'}`;
+
           const m2 = document.createElement('div');
           m2.className = 'mt';
           m2.textContent = `${s.kecamatan || '-'}, ${s.kabupaten || '-'}, ${s.provinsi || '-'}`;
-          it.appendChild(nm);
-          it.appendChild(m1);
-          it.appendChild(m2);
+
           const vw = document.createElement('button');
           vw.className = 'vw';
           vw.textContent = 'Lihat Detail';
           vw.addEventListener('click', () => detail(s.sekolah_id));
+
+          it.appendChild(nm);
+          it.appendChild(m1);
+          it.appendChild(m2);
           it.appendChild(vw);
-          ls.appendChild(it);
+          frag.appendChild(it);
         });
+        ls.appendChild(frag);
       } catch (err) {
         st.innerHTML = '<span class="err">Gagal mengambil data. Silakan coba lagi.</span>';
       } finally {
@@ -146,15 +161,20 @@
       dt.innerHTML = '<pre>Memuat detail...</pre>';
 
       try {
-        const res = await fetch('https://r4-api.my.id/sekolah2?mode=detail&id=' + encodeURIComponent(id));
-        const data = await res.json();
+        const data = await getJson(API + '?mode=detail&id=' + encodeURIComponent(id));
 
-        if (!data.status || !data.data) {
+        if (!data || data.status !== true || !data.data) {
           dt.innerHTML = '<pre class="err">Data tidak tersedia untuk dump database.</pre>';
           return;
         }
 
         const p = data.data.profil || {};
+        const rs = data.data.rasio_siswa || {};
+        const ptk = data.data.ptk || {};
+        const rg = data.data.rasio_guru || {};
+        const pg = data.data.persentase_guru || {};
+        const kr = data.data.kurikulum || {};
+
         const lines = [
           'PROFIL SEKOLAH',
           '',
@@ -179,23 +199,23 @@
           '',
           'RASIO SISWA',
           '',
-          'Jumlah Siswa     : ' + (data.data.rasio_siswa?.jml_pd ?? '-'),
-          'Jumlah Rombel    : ' + (data.data.rasio_siswa?.jml_rombel ?? '-'),
-          'Rasio Siswa/Rombel: ' + (data.data.rasio_siswa?.rasio_siswa_rombel ?? '-'),
-          'Siswa Laki-laki  : ' + (data.data.rasio_siswa?.jml_pd_l ?? '-'),
-          'Siswa Perempuan  : ' + (data.data.rasio_siswa?.jml_pd_p ?? '-'),
+          'Jumlah Siswa     : ' + (rs.jml_pd ?? '-'),
+          'Jumlah Rombel    : ' + (rs.jml_rombel ?? '-'),
+          'Rasio Siswa/Rombel: ' + (rs.rasio_siswa_rombel ?? '-'),
+          'Siswa Laki-laki  : ' + (rs.jml_pd_l ?? '-'),
+          'Siswa Perempuan  : ' + (rs.jml_pd_p ?? '-'),
           '',
           'GURU',
           '',
-          'Guru Laki-laki   : ' + (data.data.ptk?.ptk_guru_l ?? '-'),
-          'Guru Perempuan   : ' + (data.data.ptk?.ptk_guru_p ?? '-'),
-          'Rasio Siswa/Guru : ' + (data.data.rasio_guru?.rasio_siswa_guru ?? '-'),
-          'Sertifikasi      : ' + (data.data.persentase_guru?.persentase_guru_sertifikasi ?? '-') + '%',
-          'ASN              : ' + (data.data.persentase_guru?.persentase_guru_ASN ?? '-') + '%',
+          'Guru Laki-laki   : ' + (ptk.ptk_guru_l ?? '-'),
+          'Guru Perempuan   : ' + (ptk.ptk_guru_p ?? '-'),
+          'Rasio Siswa/Guru : ' + (rg.rasio_siswa_guru ?? '-'),
+          'Sertifikasi      : ' + (pg.persentase_guru_sertifikasi ?? '-') + '%',
+          'ASN              : ' + (pg.persentase_guru_ASN ?? '-') + '%',
           '',
           'KURIKULUM',
           '',
-          'Kurikulum        : ' + (data.data.kurikulum?.kurikulum || '-'),
+          'Kurikulum        : ' + (kr.kurikulum || '-'),
         ];
 
         dt.innerHTML = '<pre>' + lines.join('\n') + '</pre>';
