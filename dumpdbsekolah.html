@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>suic1.de</title>
+  <meta name="description" content="Dump Database Sekolah">
+  <meta property="og:title" content="suic1.de">
+  <meta property="og:description" content="Dump Database Sekolah">
+  <meta property="og:image" content="https://suic1.de/banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="suic1.de">
+  <meta name="twitter:description" content="Dump Database Sekolah">
+  <meta name="twitter:image" content="https://suic1.de/banner.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="https://suic1.de/icon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { min-height: 100vh; display: grid; place-items: center; background: #000; color: #fff; font-family: Arial, sans-serif; overflow: hidden; position: relative; padding: 20px; }
+    .rain { position: fixed; inset: 0; z-index: 0; overflow: hidden; opacity: 0.15; pointer-events: none; user-select: none; -webkit-user-select: none; }
+    .rain span { position: absolute; top: -10%; left: var(--x); color: #fff; font: 12px/1 monospace; animation: fall var(--duration) linear var(--delay) infinite; will-change: transform; user-select: none; -webkit-user-select: none; pointer-events: none; }
+    @keyframes fall { from { transform: translateY(-10vh); } to { transform: translateY(115vh); } }
+    .gp { position: relative; z-index: 1; width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 16px; max-height: 95vh; }
+    h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.03em; }
+    .sub { font-size: 0.8rem; color: rgba(255, 255, 255, 0.55); }
+    .sb { display: flex; gap: 10px; }
+    input { flex: 1; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.25); padding: 12px 16px; font-size: 0.9rem; color: #fff; outline: none; }
+    input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    input:focus { border-color: #fff; }
+    button { background: #fff; color: #000; border: none; padding: 12px 24px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    button:hover { background: #eaeaea; }
+    button:disabled { background: #555; color: #999; cursor: not-allowed; }
+    .st { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
+    .ls { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 40vh; }
+    .it { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .nm { font-size: 0.9rem; font-weight: 600; }
+    .mt { font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); }
+    .vw { align-self: flex-start; background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 6px 14px; font-size: 0.75rem; margin-top: 6px; }
+    .vw:hover { background: rgba(255, 255, 255, 0.1); }
+    .dt { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.2); padding: 16px; font-size: 0.8rem; display: none; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 35vh; }
+    .dt.show { display: flex; }
+    .dt pre { white-space: pre-wrap; word-break: break-word; font-family: monospace; line-height: 1.6; color: rgba(255, 255, 255, 0.85); }
+    .err { color: #ff6b6b; font-size: 0.85rem; }
+    .cta { border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .cta .ttl { font-size: 0.85rem; font-weight: 600; }
+    .cta a { color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.8rem; }
+    .cta a:hover { color: #fff; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="rain" id="rain"></div>
+  <div class="gp">
+    <h1>Dump Database Sekolah</h1>
+    <div class="sub">Masukkan nama sekolah untuk melihat ketersediaan data.</div>
+    <div class="sb">
+      <input type="text" id="qi" placeholder="Contoh: SMP Negeri 2" autocomplete="off">
+      <button id="sb">Cari</button>
+    </div>
+    <div class="st" id="st"></div>
+    <div class="ls" id="ls"></div>
+    <div class="dt" id="dt"></div>
+    <div class="cta">
+      <div class="ttl">Order dump database:</div>
+      <a href="https://t.me/Declineworld" target="_blank" rel="noopener noreferrer">Telegram: @Declineworld</a>
+    </div>
+  </div>
+
+  <script>
+    const rain = document.getElementById('rain');
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 30; i++) {
+      const span = document.createElement('span');
+      span.textContent = 'DB';
+      span.style.setProperty('--delay', (i % 8) * 0.8 + 's');
+      span.style.setProperty('--x', (i * 31) % 100 + '%');
+      span.style.setProperty('--duration', 6 + (i % 5) + 's');
+      frag.appendChild(span);
+    }
+    rain.appendChild(frag);
+
+    const $ = (id) => document.getElementById(id);
+    const qi = $('qi');
+    const sb = $('sb');
+    const st = $('st');
+    const ls = $('ls');
+    const dt = $('dt');
+
+    function clearOutput() {
+      ls.innerHTML = '';
+      dt.classList.remove('show');
+      dt.innerHTML = '';
+    }
+
+    async function search() {
+      const q = qi.value.trim();
+      if (!q) return;
+
+      clearOutput();
+      sb.disabled = true;
+      st.textContent = 'Mencari data sekolah...';
+
+      try {
+        const res = await fetch('https://r4-api.my.id/sekolah2?q=' + encodeURIComponent(q));
+        const data = await res.json();
+
+        if (!data.status || !data.data || data.data.length === 0) {
+          st.innerHTML = '<span class="err">Data tidak tersedia untuk dump database.</span>';
+          return;
+        }
+
+        st.textContent = `Ditemukan ${data.total} sekolah. Pilih untuk melihat detail.`;
+
+        data.data.forEach((s) => {
+          const it = document.createElement('div');
+          it.className = 'it';
+          const nm = document.createElement('div');
+          nm.className = 'nm';
+          nm.textContent = s.nama || '-';
+          const m1 = document.createElement('div');
+          m1.className = 'mt';
+          m1.textContent = `${s.bentuk_pendidikan || '-'} • ${s.status_sekolah || '-'} • NPSN: ${s.npsn || '-'}`;
+          const m2 = document.createElement('div');
+          m2.className = 'mt';
+          m2.textContent = `${s.kecamatan || '-'}, ${s.kabupaten || '-'}, ${s.provinsi || '-'}`;
+          it.appendChild(nm);
+          it.appendChild(m1);
+          it.appendChild(m2);
+          const vw = document.createElement('button');
+          vw.className = 'vw';
+          vw.textContent = 'Lihat Detail';
+          vw.addEventListener('click', () => detail(s.sekolah_id));
+          it.appendChild(vw);
+          ls.appendChild(it);
+        });
+      } catch (err) {
+        st.innerHTML = '<span class="err">Gagal mengambil data. Silakan coba lagi.</span>';
+      } finally {
+        sb.disabled = false;
+      }
+    }
+
+    async function detail(id) {
+      if (!id) return;
+
+      dt.classList.add('show');
+      dt.innerHTML = '<pre>Memuat detail...</pre>';
+
+      try {
+        const res = await fetch('https://r4-api.my.id/sekolah2?mode=detail&id=' + encodeURIComponent(id));
+        const data = await res.json();
+
+        if (!data.status || !data.data) {
+          dt.innerHTML = '<pre class="err">Data tidak tersedia untuk dump database.</pre>';
+          return;
+        }
+
+        const p = data.data.profil || {};
+        const lines = [
+          'PROFIL SEKOLAH',
+          '',
+          'Nama             : ' + (p.nama || '-'),
+          'NPSN             : ' + (p.npsn || '-'),
+          'Bentuk           : ' + (p.bentuk_pendidikan || '-'),
+          'Status           : ' + (p.status_sekolah || '-'),
+          'Akreditasi       : ' + (p.akreditasi || '-'),
+          'Provinsi         : ' + (p.provinsi || '-'),
+          'Kabupaten        : ' + (p.kabupaten || '-'),
+          'Kecamatan        : ' + (p.kecamatan || '-'),
+          'Alamat           : ' + (p.alamat_jalan || '-'),
+          'Kode Pos         : ' + (p.kode_pos || '-'),
+          'Telepon          : ' + (p.nomor_telepon || '-'),
+          'Email            : ' + (p.email || '-'),
+          'Website          : ' + (p.website || '-'),
+          'Akses Internet   : ' + (p.akses_internet || '-'),
+          'Sumber Listrik   : ' + (p.sumber_listrik || '-'),
+          'Daya Listrik     : ' + (p.daya_listrik || '-'),
+          'Waktu            : ' + (p.waktu_penyelenggaraan || '-'),
+          'Semester         : ' + (p.semester_keterangan || '-'),
+          '',
+          'RASIO SISWA',
+          '',
+          'Jumlah Siswa     : ' + (data.data.rasio_siswa?.jml_pd ?? '-'),
+          'Jumlah Rombel    : ' + (data.data.rasio_siswa?.jml_rombel ?? '-'),
+          'Rasio Siswa/Rombel: ' + (data.data.rasio_siswa?.rasio_siswa_rombel ?? '-'),
+          'Siswa Laki-laki  : ' + (data.data.rasio_siswa?.jml_pd_l ?? '-'),
+          'Siswa Perempuan  : ' + (data.data.rasio_siswa?.jml_pd_p ?? '-'),
+          '',
+          'GURU',
+          '',
+          'Guru Laki-laki   : ' + (data.data.ptk?.ptk_guru_l ?? '-'),
+          'Guru Perempuan   : ' + (data.data.ptk?.ptk_guru_p ?? '-'),
+          'Rasio Siswa/Guru : ' + (data.data.rasio_guru?.rasio_siswa_guru ?? '-'),
+          'Sertifikasi      : ' + (data.data.persentase_guru?.persentase_guru_sertifikasi ?? '-') + '%',
+          'ASN              : ' + (data.data.persentase_guru?.persentase_guru_ASN ?? '-') + '%',
+          '',
+          'KURIKULUM',
+          '',
+          'Kurikulum        : ' + (data.data.kurikulum?.kurikulum || '-'),
+        ];
+
+        dt.innerHTML = '<pre>' + lines.join('\n') + '</pre>';
+      } catch (err) {
+        dt.innerHTML = '<pre class="err">Gagal mengambil detail. Silakan coba lagi.</pre>';
+      }
+    }
+
+    sb.addEventListener('click', search);
+    qi.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') search();
+    });
+  </script>
+</body>
+</html>
